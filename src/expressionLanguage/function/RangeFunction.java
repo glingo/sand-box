@@ -1,5 +1,6 @@
 package expressionLanguage.function;
 
+import expressionLanguage.EvaluationContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,12 @@ public class RangeFunction implements Function {
     }
 
     @Override
-    public Object execute(Map<String, Object> args) {
+    public String getName() {
+        return FUNCTION_NAME;
+    }
+
+    @Override
+    public String evaluate(EvaluationContext context, Map<String, Object> args) {
         Object start = args.get(PARAM_START);
         Object end = args.get(PARAM_END);
         Object increment = (Object) args.get(PARAM_INCREMENT);
@@ -88,7 +94,7 @@ public class RangeFunction implements Function {
                     + "length of 1");
         }
 
-        return results;
+        return results.toString();
     }
 
     @Override

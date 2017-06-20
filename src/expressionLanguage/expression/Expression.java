@@ -2,7 +2,8 @@ package expressionLanguage.expression;
 
 import expressionLanguage.EvaluationContext;
 
+@FunctionalInterface
 public interface Expression<T> {
 
-    T evaluate(EvaluationContext context) throws Exception;
+    T evaluate(EvaluationContext context);
 }

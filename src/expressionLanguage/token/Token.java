@@ -17,18 +17,18 @@ public class Token {
         this.position = position;
     }
     
-    public boolean test(Type type) {
-        return test(type, new String[0]);
+    public boolean isA(Type type) {
+        return this.type.equals(type);
     }
 
-    public boolean test(Type type, String... values) {
+    public boolean isA(Type type, String... values) {
         boolean test = true;
         
         if (values.length > 0) {
             test = Arrays.asList(values).contains(this.value);
         }
         
-        return test && this.type.equals(type);
+        return test && isA(type);
     }
 
     public String getValue() {
@@ -53,6 +53,10 @@ public class Token {
 
     public void setPosition(Position position) {
         this.position = position;
+    }
+    
+    public boolean isEOF() {
+        return Type.EOF.equals(getType());
     }
 
     @Override

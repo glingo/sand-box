@@ -23,23 +23,18 @@ public class MapExpression implements Expression<Map<?, ?>> {
             this.entries = entries;
         }
     }
-//
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
 
     @Override
-    public Map<?, ?> evaluate(EvaluationContext context) throws Exception {
+    public Map<?, ?> evaluate(EvaluationContext context) {
         Map<Object, Object> returnEntries = new HashMap<>(Long.valueOf(Math.round(Math.ceil(entries.size() / 0.75)))
                 .intValue());
-        for (Entry<Expression<?>, Expression<?>> entry : entries.entrySet()) {
+        entries.entrySet().stream().forEach((entry) -> {
             Expression<?> keyExpr = entry.getKey();
             Expression<?> valueExpr = entry.getValue();
             Object key = keyExpr == null ? null : keyExpr.evaluate(context);
             Object value = valueExpr == null ? null : valueExpr.evaluate(context);
             returnEntries.put(key, value);
-        }
+        });
         return returnEntries;
     }
 

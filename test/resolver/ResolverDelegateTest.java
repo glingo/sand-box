@@ -39,8 +39,8 @@ public class ResolverDelegateTest {
         Object object = null;
         ResolverDelegate instance = new ResolverDelegate();
         boolean expResult = false;
-        boolean result = instance.support(object);
-        assertEquals(expResult, result);
+//        boolean result = instance.support(object);
+//        assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -93,7 +93,7 @@ public class ResolverDelegateTest {
     public void testAddResolver() {
         System.out.println("addResolver");
         ResolverDelegate instance = new ResolverDelegate();
-        instance.addResolver(null);
+//        instance.addResolver(null);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }

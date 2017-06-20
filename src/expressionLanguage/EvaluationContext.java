@@ -1,7 +1,8 @@
 package expressionLanguage;
 
+import expressionLanguage.model.template.Hierarchy;
 import expressionLanguage.extension.ExtensionRegistry;
-import expressionLanguage.model.tree.Node;
+import expressionLanguage.model.template.Template;
 import expressionLanguage.scope.ScopeChain;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +47,6 @@ public class EvaluationContext {
     private final ExtensionRegistry extensionRegistry;
 
     /**
-     * The tag cache
-     */
-//    private final Cache<BaseTagCacheKey, Object> tagCache;
-    /**
      * The user-provided ExecutorService (can be null).
      */
     private final ExecutorService executorService;
@@ -57,8 +54,8 @@ public class EvaluationContext {
     /**
      * The imported templates are used to look up macros.
      */
-    private final List<Node> importedNodes;
-
+    private final List<Template> imported;
+    
     /**
      * Constructor used to provide all final variables.
      *
@@ -67,13 +64,13 @@ public class EvaluationContext {
      * @param locale The locale of the template
      * @param extensionRegistry The extension registry
      * @param executorService The optional executor service
-     * @param importedNodes
+     * @param imported
      * @param scopeChain The scope chain
      * @param hierarchy The inheritance chain
      */
-    public EvaluationContext(Node self, boolean strictVariables, Locale locale,
+    public EvaluationContext(Template self, boolean strictVariables, Locale locale,
             ExtensionRegistry extensionRegistry,
-            ExecutorService executorService, List<Node> importedNodes, ScopeChain scopeChain,
+            ExecutorService executorService, List<Template> imported, ScopeChain scopeChain,
             Hierarchy hierarchy) {
 
         if (hierarchy == null) {
@@ -83,9 +80,8 @@ public class EvaluationContext {
         this.strictVariables = strictVariables;
         this.locale = locale;
         this.extensionRegistry = extensionRegistry;
-//        this.tagCache = tagCache;
         this.executorService = executorService;
-        this.importedNodes = importedNodes;
+        this.imported = imported;
         this.scopeChain = scopeChain;
         this.hierarchy = hierarchy;
     }
@@ -97,8 +93,8 @@ public class EvaluationContext {
      * @param self The template implementation
      * @return A copy of the evaluation context
      */
-    public EvaluationContext shallowCopyWithoutInheritanceChain(Node self) {
-        EvaluationContext result = new EvaluationContext(self, strictVariables, locale, extensionRegistry, executorService, importedNodes, scopeChain, null);
+    public EvaluationContext shallowCopyWithoutInheritanceChain(Template self) {
+        EvaluationContext result = new EvaluationContext(self, strictVariables, locale, extensionRegistry, executorService, imported, scopeChain, null);
         return result;
     }
 
@@ -110,8 +106,8 @@ public class EvaluationContext {
      * @param self The template implementation
      * @return A copy of the evaluation context
      */
-    public EvaluationContext threadSafeCopy(Node self) {
-        EvaluationContext result = new EvaluationContext(self, strictVariables, locale, extensionRegistry, executorService, new ArrayList<>(importedNodes), scopeChain.deepCopy(), hierarchy);
+    public EvaluationContext threadSafeCopy(Template self) {
+        EvaluationContext result = new EvaluationContext(self, strictVariables, locale, extensionRegistry, executorService, new ArrayList<>(imported), scopeChain.deepCopy(), hierarchy);
         return result;
     }
 
@@ -155,23 +151,14 @@ public class EvaluationContext {
     }
 
     /**
-     * Returns a list of imported Nodes.
+     * Returns a list of imported Templates.
      *
-     * @return A list of imported Nodes.
+     * @return A list of imported Templates.
      */
-    public List<Node> getImportedNodes() {
-        return this.importedNodes;
+    public List<Template> getImported() {
+        return this.imported;
     }
-
-    /**
-     * Returns the cache used for the "cache" tag
-     *
-     * @return The cache used for the "cache" tag
-     */
-//    public Cache<BaseTagCacheKey, Object> getTagCache() {
-//        return tagCache;
-//    }
-
+    
     /**
      * Returns the scope chain data structure that allows variables to be
      * added/removed from the current scope and retrieved from the nearest

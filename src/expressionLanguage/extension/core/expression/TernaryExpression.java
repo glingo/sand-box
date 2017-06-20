@@ -18,7 +18,7 @@ public class TernaryExpression implements Expression<Object> {
     }
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
         if (expression1.evaluate(context) != null && expression1.evaluate(context)) {
             return expression2.evaluate(context);
         } else {

@@ -11,13 +11,8 @@ public class LiteralLongExpression implements Expression<Long> {
         this.value = value;
     }
 
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
-
     @Override
-    public Long evaluate(EvaluationContext context) throws Exception {
+    public Long evaluate(EvaluationContext context) {
         return value;
     }
 

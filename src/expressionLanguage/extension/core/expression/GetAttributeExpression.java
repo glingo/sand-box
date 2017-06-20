@@ -3,7 +3,7 @@ package expressionLanguage.extension.core.expression;
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.Expression;
 import expressionLanguage.model.tree.ArgumentsNode;
-import expressionLanguage.model.tree.PositionalArgumentNode;
+import expressionLanguage.model.tree.ArgumentNode;
 import java.lang.reflect.*;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * following order: map entry, array item, list item, get method, is method, has
  * method, public method, public field.
  *
- * @author Mitchell
  */
 public class GetAttributeExpression implements Expression<Object> {
 
@@ -50,7 +49,7 @@ public class GetAttributeExpression implements Expression<Object> {
     }
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
         Object object = node.evaluate(context);
         Object attributeNameValue = attributeNameExpression.evaluate(context);
         String attributeName = String.valueOf(attributeNameValue);
@@ -83,7 +82,7 @@ public class GetAttributeExpression implements Expression<Object> {
                         if (index < 0 || index >= length) {
                             if (context.isStrictVariables()) {
                                 String msg = String.format("Index out of bounds while accessing array with strict variables on, on attribute %s in file %s.", attributeName, filename);
-                                throw new Exception(msg);
+                                throw new IndexOutOfBoundsException(msg);
                             } else {
                                 return null;
                             }
@@ -103,7 +102,7 @@ public class GetAttributeExpression implements Expression<Object> {
                         if (index < 0 || index >= length) {
                             if (context.isStrictVariables()) {
                                 String msg = String.format("Index out of bounds while accessing array with strict variables on, on attribute %s in file %s.", attributeName, filename);
-                                throw new Exception(msg);
+                                throw new IndexOutOfBoundsException(msg);
                             } else {
                                 return null;
                             }
@@ -147,20 +146,18 @@ public class GetAttributeExpression implements Expression<Object> {
             result = invokeMember(object, member, argumentValues);
         } else if (context.isStrictVariables()) {
             if (object == null) {
-
                 if (node instanceof ContextVariableExpression) {
                     final String rootPropertyName = ((ContextVariableExpression) node).getName();
                     String msg = String.format("Root attribute [%s] does not exist or can not be accessed and strict variables is set to true at line %s in file %s.", rootPropertyName, this.filename);
-                    throw new Exception(msg);
-                } else {
-                    String msg = String.format("Attempt to get attribute of null object and strict variables is set to true at line %s in file %s.", attributeName, this.filename);
-                    throw new Exception(msg);
+                    throw new IllegalStateException(msg);
                 }
+                
+                String msg = String.format("Attempt to get attribute of null object and strict variables is set to true at line %s in file %s.", attributeName, this.filename);
+                throw new NullPointerException(msg);
 
-            } else {
-                String msg = String.format("Attribute [%s] of [%s] does not exist or can not be accessed and strict variables is set to true at line %s in file %s.",attributeName, object.getClass().getName(), this.filename);
-                throw new Exception(msg);
             }
+            String msg = String.format("Attribute [%s] of [%s] does not exist or can not be accessed and strict variables is set to true at line %s in file %s.",attributeName, object.getClass().getName(), this.filename);
+            throw new IllegalStateException(msg);
         }
         return result;
 
@@ -195,22 +192,21 @@ public class GetAttributeExpression implements Expression<Object> {
      * @param self
      * @param context
      * @return
-     * @throws Exception
      */
-    private Object[] getArgumentValues(EvaluationContext context) throws Exception {
+    private Object[] getArgumentValues(EvaluationContext context) {
 
         Object[] argumentValues;
 
         if (this.args == null) {
             argumentValues = new Object[0];
         } else {
-            List<PositionalArgumentNode> args = this.args.getPositionalArgs();
+            List<ArgumentNode> args = this.args.getArgs();
 
             argumentValues = new Object[args.size()];
 
             int index = 0;
-            for (PositionalArgumentNode arg : args) {
-                Object argumentValue = arg.getValueExpression().evaluate(context);
+            for (ArgumentNode arg : args) {
+                Object argumentValue = arg.getValue().evaluate(context);
                 argumentValues[index] = argumentValue;
                 index++;
             }

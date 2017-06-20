@@ -8,13 +8,8 @@ public class LiteralNullExpression implements Expression<Object> {
     public LiteralNullExpression() {
     }
 
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
-
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
         return null;
     }
 

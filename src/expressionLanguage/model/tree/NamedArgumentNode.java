@@ -2,7 +2,6 @@ package expressionLanguage.model.tree;
 
 import expressionLanguage.expression.Expression;
 import expressionLanguage.model.position.Position;
-import templating.extension.NodeVisitor;
 
 public class NamedArgumentNode extends Node {
 
@@ -15,11 +14,6 @@ public class NamedArgumentNode extends Node {
         this.name = name;
         this.value = value;
     }
-
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
 
     public Expression<?> getValueExpression() {
         return value;

@@ -19,7 +19,7 @@ public class RenderableNodeExpression extends UnaryExpression {
     }
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
 //        Writer writer = new StringWriter();
 //        try {
 //            node.render(self, writer, context);

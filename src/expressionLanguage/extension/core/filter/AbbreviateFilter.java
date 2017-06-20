@@ -1,5 +1,6 @@
 package expressionLanguage.extension.core.filter;
 
+import expressionLanguage.EvaluationContext;
 import expressionLanguage.filter.Filter;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,5 +45,6 @@ public class AbbreviateFilter implements Filter {
         }
         return value.substring(0, Math.max(0, maxWidth - 3)) + ellipsis;
     }
+
 
 }

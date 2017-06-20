@@ -1,14 +1,14 @@
 package expressionLanguage.expression.parser;
 
+import expressionLanguage.token.parser.Parser;
 import expressionLanguage.extension.core.expression.*;
 
 import expressionLanguage.expression.*;
 import expressionLanguage.model.position.Position;
 import expressionLanguage.model.tree.*;
 import expressionLanguage.operator.*;
-import expressionLanguage.operator.*;
-import expressionLanguage.parser.*;
 import expressionLanguage.token.*;
+import expressionLanguage.token.parser.TokenStreamParser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,34 +27,29 @@ public class ExpressionParser {
 
     private static final Set<String> RESERVED_KEYWORDS = new HashSet<>(Arrays.asList("true", "false", "null", "none"));
 
-    private final Parser parser;
+    private final TokenStreamParser parser;
 
     private TokenStream stream;
 
-    private final Map<String, BinaryOperator> binaryOperators;
-
-    private final Map<String, UnaryOperator> unaryOperators;
+    private final Map<String, Operator> operators;
 
     /**
      * Constructor
      *
      * @param parser A reference to the main parser
-     * @param binaryOperators All the binary operators
-     * @param unaryOperators All the unary operators
+     * @param operators All the operators
      */
-    public ExpressionParser(Parser parser, Map<String, BinaryOperator> binaryOperators, Map<String, UnaryOperator> unaryOperators) {
+    public ExpressionParser(TokenStreamParser parser, Map<String, Operator> operators) {
         this.parser = parser;
-        this.binaryOperators = binaryOperators;
-        this.unaryOperators = unaryOperators;
+        this.operators = operators;
     }
 
     /**
      * The public entry point for parsing an expression.
      *
      * @return NodeExpression the expression that has been parsed.
-     * @throws Exception Thrown if a parsing error occurs
      */
-    public Expression<?> parseExpression() throws Exception {
+    public Expression<?> parseExpression() {
         return parseExpression(0);
     }
 
@@ -68,7 +63,7 @@ public class ExpressionParser {
      * @return The NodeExpression representing the parsed expression.
      * @throws ParserException Thrown if a parsing error occurs.
      */
-    private Expression<?> parseExpression(int minPrecedence) throws Exception {
+    private Expression<?> parseExpression(int minPrecedence) {
 
         this.stream = parser.getStream();
         Token token = stream.current();
@@ -79,7 +74,7 @@ public class ExpressionParser {
          * operator, or an opening bracket, or neither.
          */
         if (isUnary(token)) {
-            UnaryOperator operator = this.unaryOperators.get(token.getValue());
+            Operator operator = this.operators.get(token.getValue());
             stream.next();
             expression = parseExpression(operator.getPrecedence());
 
@@ -95,21 +90,21 @@ public class ExpressionParser {
 
             expression = unaryExpression;
 
-        } else if (token.test(Type.PUNCTUATION, "(")) {
+        } else if (token.isA(Type.PUNCTUATION, "(")) {
 
             stream.next();
             expression = parseExpression();
             stream.expect(Type.PUNCTUATION, ")");
             expression = parsePostfixExpression(expression);
 
-        }  else if (token.test(Type.PUNCTUATION, "[")) { // array definition syntax
+        }  else if (token.isA(Type.PUNCTUATION, "[")) { // array definition syntax
 
             // preserve [ token for array parsing
             expression = parseArrayDefinitionExpression();
             // don't expect ], because it has been already expected
             // currently, postfix expressions are not supported for arrays
             // expression = parsePostfixExpression(expression);
-        }  else if (token.test(Type.PUNCTUATION, "{")) { // map definition syntax
+        }  else if (token.isA(Type.PUNCTUATION, "{")) { // map definition syntax
 
             // preserve { token for map parsing
             expression = parseMapDefinitionExpression();
@@ -132,10 +127,10 @@ public class ExpressionParser {
          * operator that requires parsing. Otherwise we're done.
          */
         token = stream.current();
-        while (isBinary(token) && binaryOperators.get(token.getValue()).getPrecedence() >= minPrecedence) {
+        while (isBinary(token) && operators.get(token.getValue()).getPrecedence() >= minPrecedence) {
 
             // find out which operator we are dealing with and then skip over it
-            BinaryOperator operator = binaryOperators.get(token.getValue());
+            Operator operator = operators.get(token.getValue());
             stream.next();
 
             Expression<?> expressionRight = null;
@@ -154,8 +149,8 @@ public class ExpressionParser {
                  * parse the expression on the right hand side of the operator
                  * while maintaining proper associativity and precedence
                  */
-                expressionRight = parseExpression(Associativity.LEFT.equals(operator.getAssociativity()) ? operator
-                        .getPrecedence() + 1 : operator.getPrecedence());
+//                Associativity.LEFT.equals(operator.getAssociativity()) ? operator.getPrecedence() + 1 : operator.getPrecedence();
+                expressionRight = parseExpression(operator.getPrecedence());
             }
 
             /*
@@ -169,8 +164,8 @@ public class ExpressionParser {
                 finalExpression = (BinaryExpression<?>) operatorExpression.newInstance();
 //                finalExpression.setLineNumber(stream.current().getPosition());
             } catch (InstantiationException | IllegalAccessException e) {
-                String msg = String.format("Error instantiating operator node [%s] at line %s in file %s.", operatorExpression.getName(), token.getPosition(), stream.getFilename());
-                throw new Exception(msg);
+                String msg = String.format("Error instantiating operator node [%s] at %s.", operatorExpression.getName(), token.getPosition());
+                throw new IllegalStateException(msg);
             }
 
             finalExpression.setLeftExpression(expression);
@@ -195,7 +190,7 @@ public class ExpressionParser {
      * @return boolean Whether the token is a unary operator or not
      */
     private boolean isUnary(Token token) {
-        return token.test(Type.OPERATOR) && this.unaryOperators.containsKey(token.getValue());
+        return token.isA(Type.OPERATOR) && this.operators.containsKey(token.getValue()) && (this.operators.get(token.getValue()) instanceof UnaryOperator);
     }
 
     /**
@@ -205,7 +200,7 @@ public class ExpressionParser {
      * @return boolean Whether the token is a binary operator or not
      */
     private boolean isBinary(Token token) {
-        return token.test(Type.OPERATOR) && this.binaryOperators.containsKey(token.getValue());
+        return token.isA(Type.OPERATOR) && this.operators.containsKey(token.getValue()) && (this.operators.get(token.getValue()) instanceof BinaryOperator);
     }
 
     /**
@@ -216,7 +211,7 @@ public class ExpressionParser {
      * @return NodeExpression The expression that it found.
      * @throws Exception Thrown if a parsing error occurs.
      */
-    private Expression<?> subparseExpression() throws Exception {
+    private Expression<?> subparseExpression() {
         final Token token = stream.current();
         Expression<?> node = null;
 
@@ -244,7 +239,7 @@ public class ExpressionParser {
                     default:
 
                         // name of a function?
-                        if (stream.peek().test(Type.PUNCTUATION, "(")) {
+                        if (stream.peek().isA(Type.PUNCTUATION, "(")) {
                             node = new FunctionOrMacroNameNode(stream.peek().getPosition(), token.getValue());
                         } // variable name
                         else {
@@ -272,7 +267,7 @@ public class ExpressionParser {
             default:
                 String msg = String.format("Unexpected token \"%s\" of value \"%s\" at line %s in file %s.", token.getType()
                         .toString(), token.getValue(), token.getPosition(), stream.getFilename());
-                throw new Exception(msg);
+                throw new IllegalStateException(msg);
         }
 
         // there may or may not be more to this expression - let's keep looking
@@ -280,9 +275,9 @@ public class ExpressionParser {
         return parsePostfixExpression(node);
     }
 
-    private Expression<?> parseTernaryExpression(Expression<?> expression) throws Exception {
+    private Expression<?> parseTernaryExpression(Expression<?> expression) {
         // if the next token isn't a ?, we're not dealing with a ternary expression
-        if (!stream.current().test(Type.PUNCTUATION, "?")) {
+        if (!stream.current().isA(Type.PUNCTUATION, "?")) {
             return expression;
         }
 
@@ -304,20 +299,19 @@ public class ExpressionParser {
      * @param node The expression that we have already discovered
      * @return Either the original expression that was passed in or a slightly
      * modified version of it, depending on what was discovered.
-     * @throws Exception Thrown if a parsing error occurs.
      */
-    private Expression<?> parsePostfixExpression(Expression<?> node) throws Exception {
+    private Expression<?> parsePostfixExpression(Expression<?> node) {
         Token current;
         while (true) {
             current = stream.current();
 
-            if (current.test(Type.PUNCTUATION, ".") || current.test(Type.PUNCTUATION, "[")) {
+            if (current.isA(Type.PUNCTUATION, ".") || current.isA(Type.PUNCTUATION, "[")) {
 
                 // a period represents getting an attribute from a variable or
                 // calling a method
                 node = parseBeanAttributeExpression(node);
 
-            } else if (current.test(Type.PUNCTUATION, "(")) {
+            } else if (current.isA(Type.PUNCTUATION, "(")) {
 
                 // function call
                 node = parseFunctionOrMacroInvocation(node);
@@ -329,7 +323,7 @@ public class ExpressionParser {
         return node;
     }
 
-    private Expression<?> parseFunctionOrMacroInvocation(Expression<?> node) throws Exception {
+    private Expression<?> parseFunctionOrMacroInvocation(Expression<?> node) {
         String functionName = ((FunctionOrMacroNameNode) node).getName();
         ArgumentsNode args = parseArguments();
 
@@ -347,12 +341,12 @@ public class ExpressionParser {
         return new FunctionOrMacroInvocationExpression(functionName, args);
     }
 
-    public FilterInvocationExpression parseFilterInvocationExpression() throws Exception {
+    public FilterInvocationExpression parseFilterInvocationExpression() {
         TokenStream stream = parser.getStream();
         Token filterToken = stream.expect(Type.NAME);
 
         ArgumentsNode args = null;
-        if (stream.current().test(Type.PUNCTUATION, "(")) {
+        if (stream.current().isA(Type.PUNCTUATION, "(")) {
             args = this.parseArguments();
         } else {
             args = new ArgumentsNode(filterToken.getPosition(), null, null);
@@ -361,14 +355,14 @@ public class ExpressionParser {
         return new FilterInvocationExpression(filterToken.getValue(), args);
     }
 
-    private Expression<?> parseTestInvocationExpression() throws Exception {
+    private Expression<?> parseTestInvocationExpression() {
         TokenStream stream = parser.getStream();
         Position position = stream.current().getPosition();
 
         Token testToken = stream.expect(Type.NAME);
 
         ArgumentsNode args = null;
-        if (stream.current().test(Type.PUNCTUATION, "(")) {
+        if (stream.current().isA(Type.PUNCTUATION, "(")) {
             args = this.parseArguments();
         } else {
             args = new ArgumentsNode(testToken.getPosition(), null, null);
@@ -386,12 +380,11 @@ public class ExpressionParser {
      *
      * @param node The expression parsed so far
      * @return NodeExpression The parsed subscript expression
-     * @throws Exception Thrown if a parsing error occurs.
      */
-    private Expression<?> parseBeanAttributeExpression(Expression<?> node) throws Exception {
+    private Expression<?> parseBeanAttributeExpression(Expression<?> node) {
         TokenStream stream = parser.getStream();
 
-        if (stream.current().test(Type.PUNCTUATION, ".")) {
+        if (stream.current().isA(Type.PUNCTUATION, ".")) {
 
             // skip over the '.' token
             stream.next();
@@ -399,18 +392,18 @@ public class ExpressionParser {
             Token token = stream.expect(Type.NAME);
 
             ArgumentsNode args = null;
-            if (stream.current().test(Type.PUNCTUATION, "(")) {
+            if (stream.current().isA(Type.PUNCTUATION, "(")) {
                 args = this.parseArguments();
                 if (!args.getNamedArgs().isEmpty()) {
                     String msg = String.format("Can not use named arguments when calling a bean method at line %s in file %s.", stream.current().getPosition(), stream.getFilename());
-                    throw new Exception(msg);
+                    throw new IllegalStateException(msg);
                 }
             }
 
             node = new GetAttributeExpression(node, new LiteralStringExpression(token.getValue()), args,
                     stream.getFilename());
 
-        } else if (stream.current().test(Type.PUNCTUATION, "[")) {
+        } else if (stream.current().isA(Type.PUNCTUATION, "[")) {
             // skip over opening '[' bracket
             stream.next();
 
@@ -423,19 +416,19 @@ public class ExpressionParser {
         return node;
     }
 
-    public ArgumentsNode parseArguments() throws Exception {
+    public ArgumentsNode parseArguments() {
         return parseArguments(false);
     }
 
-    public ArgumentsNode parseArguments(boolean isMacroDefinition) throws Exception {
+    public ArgumentsNode parseArguments(boolean isMacroDefinition) {
 
-        List<PositionalArgumentNode> positionalArgs = new ArrayList<>();
+        List<ArgumentNode> positionalArgs = new ArrayList<>();
         List<NamedArgumentNode> namedArgs = new ArrayList<>();
         this.stream = this.parser.getStream();
 
         stream.expect(Type.PUNCTUATION, "(");
 
-        while (!stream.current().test(Type.PUNCTUATION, ")")) {
+        while (!stream.current().isA(Type.PUNCTUATION, ")")) {
 
             String argumentName = null;
             Expression<?> argumentValue = null;
@@ -451,12 +444,12 @@ public class ExpressionParser {
              */
             if (isMacroDefinition) {
                 argumentName = parseNewVariableName();
-                if (stream.current().test(Type.PUNCTUATION, "=")) {
+                if (stream.current().isA(Type.PUNCTUATION, "=")) {
                     stream.expect(Type.PUNCTUATION, "=");
                     argumentValue = parseExpression();
                 }
             } else {
-                if (stream.peek().test(Type.PUNCTUATION, "=")) {
+                if (stream.peek().isA(Type.PUNCTUATION, "=")) {
                     argumentName = parseNewVariableName();
                     stream.expect(Type.PUNCTUATION, "=");
                 }
@@ -467,9 +460,9 @@ public class ExpressionParser {
                 if (!namedArgs.isEmpty()) {
                     String msg = String.format("Positional arguments must be declared before any named arguments at line %s in file %s.", stream.current()
                             .getPosition(), stream.getFilename());
-                    throw new Exception(msg);
+                    throw new IllegalArgumentException(msg);
                 }
-                positionalArgs.add(new PositionalArgumentNode(stream.current()
+                positionalArgs.add(new ArgumentNode(stream.current()
                             .getPosition(), argumentValue));
             } else {
                 namedArgs.add(new NamedArgumentNode(stream.current()
@@ -490,31 +483,30 @@ public class ExpressionParser {
      * This is used for the set tag, the for loop, and in named arguments.
      *
      * @return A variable name
-     * @throws Exception Thrown if a parsing error occurs.
      */
-    public String parseNewVariableName() throws Exception {
+    public String parseNewVariableName() {
 
         // set the stream because this function may be called externally (for
         // and set token parsers)
         this.stream = this.parser.getStream();
         Token token = stream.current();
-        token.test(Type.NAME);
+        token.isA(Type.NAME);
 
         if (RESERVED_KEYWORDS.contains(token.getValue())) {
             String msg = String.format("Can not assign a value to %s at line %s in file %s.", token.getValue(), token.getPosition(), stream.getFilename());
-            throw new Exception(msg);
+            throw new IllegalAccessError(msg);
         }
 
         stream.next();
         return token.getValue();
     }
 
-    private Expression<?> parseArrayDefinitionExpression() throws Exception {
+    private Expression<?> parseArrayDefinitionExpression() {
         TokenStream stream = parser.getStream();
 
         // expect the opening bracket and check for an empty array
         stream.expect(Type.PUNCTUATION, "[");
-        if (stream.current().test(Type.PUNCTUATION, "]")) {
+        if (stream.current().isA(Type.PUNCTUATION, "]")) {
             stream.next();
             return new ArrayExpression();
         }
@@ -524,7 +516,7 @@ public class ExpressionParser {
         while (true) {
             Expression<?> expr = parseExpression();
             elements.add(expr);
-            if (stream.current().test(Type.PUNCTUATION, "]")) {
+            if (stream.current().isA(Type.PUNCTUATION, "]")) {
                 // this seems to be the end of the array
                 break;
             }
@@ -539,12 +531,12 @@ public class ExpressionParser {
         return new ArrayExpression(elements);
     }
 
-    private Expression<?> parseMapDefinitionExpression() throws Exception {
+    private Expression<?> parseMapDefinitionExpression() {
         TokenStream stream = parser.getStream();
 
         // expect the opening brace and check for an empty map
         stream.expect(Type.PUNCTUATION, "{");
-        if (stream.current().test(Type.PUNCTUATION, "}")) {
+        if (stream.current().isA(Type.PUNCTUATION, "}")) {
             stream.next();
             return new MapExpression();
         }
@@ -557,7 +549,7 @@ public class ExpressionParser {
             stream.expect(Type.PUNCTUATION, ":");
             Expression<?> valueExpr = parseExpression();
             elements.put(keyExpr, valueExpr);
-            if (stream.current().test(Type.PUNCTUATION, "}")) {
+            if (stream.current().isA(Type.PUNCTUATION, "}")) {
                 // this seems to be the end of the map
                 break;
             }

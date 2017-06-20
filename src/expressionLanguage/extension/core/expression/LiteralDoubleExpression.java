@@ -10,14 +10,9 @@ public class LiteralDoubleExpression implements Expression<Double> {
     public LiteralDoubleExpression(Double value) {
         this.value = value;
     }
-//
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
-
+    
     @Override
-    public Double evaluate(EvaluationContext context) throws Exception {
+    public Double evaluate(EvaluationContext context) {
         return value;
     }
 

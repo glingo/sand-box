@@ -4,39 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ConverterDelegate implements Converter {
+public class ConverterDelegate<I, O> {
     
-    List<Converter> converters;
+    List<Converter<I, O>> converters;
 
     public ConverterDelegate() {
         this.converters = new ArrayList<>();
     }
-    
-    @Override
-    public boolean support(Object toConvert) {
-        return this.converters.stream()
-                .map((converter) -> converter.getTypes())
-                .collect(ArrayList::new, List::addAll, List::addAll)
-                .contains(toConvert);
-    }
 
-    @Override
-    public Object convert(Object toConvert, Object type) {
-        Optional<Converter> first = this.converters.stream().filter((Converter converter)->{
+    public O convert(I value, Object type) {
+        Optional<Converter<I, O>> first = this.converters.stream().filter((Converter<I, O> converter)->{
             return converter.support(type);
         }).findFirst();
         
         if (first.isPresent()) {
-            return first.get().convert(toConvert, type);
+            return first.get().convert(value, type);
         }
         
         return null;      
     }
-
-    @Override
-    public List<Object> getTypes() {
-        return this.converters.stream()
-                .map((converter) -> converter.getTypes())
-                .collect(ArrayList::new, List::addAll, List::addAll);
-    }
+    
 }

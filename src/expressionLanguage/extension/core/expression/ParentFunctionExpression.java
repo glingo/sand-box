@@ -2,8 +2,10 @@ package expressionLanguage.extension.core.expression;
 
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.Expression;
+import expressionLanguage.model.template.Hierarchy;
+import expressionLanguage.model.template.Template;
 
-public class ParentFunctionExpression implements Expression<String> {
+public class ParentFunctionExpression implements Expression<Boolean> {
 
     private final String blockName;
 
@@ -12,30 +14,19 @@ public class ParentFunctionExpression implements Expression<String> {
     }
 
     @Override
-    public String evaluate(EvaluationContext context) throws Exception {
-        return null;
-//        Writer writer = new StringWriter();
-//        try {
-//            Hierarchy hierarchy = context.getHierarchy();
-//            if (hierarchy.getParent() == null) {
-//                String msg = String.format("Can not use parent function if template does not extend another template at line %s in file %s.", lineNumber, self.getName());
-//                throw new Exception(msg);
-//            }
-//            Template parent = hierarchy.getParent();
-//
-//            hierarchy.ascend();
-//            parent.block(writer, context, blockName, true);
-//            hierarchy.descend();
-//        } catch (IOException e) {
-//            String msg = String.format("Could not render block [%s] at line %s in file %s.", blockName, this.getLineNumber(), self.getName());
-//            throw new Exception(msg);
-//        }
-//        return writer.toString();
+    public Boolean evaluate(EvaluationContext context) {
+        Hierarchy hierarchy = context.getHierarchy();
+        if (hierarchy.getParent() == null) {
+            String msg = String.format("Can not use parent function if template does not extend another template");
+            throw new IllegalStateException(msg);
+        }
+        
+        Template parent = hierarchy.getParent();
+
+        hierarchy.ascend();
+        parent.block(context, blockName, true);
+        hierarchy.descend();
+        
+        return true;
     }
-
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
-
 }

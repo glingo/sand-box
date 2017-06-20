@@ -11,13 +11,8 @@ public class LiteralBooleanExpression implements Expression<Boolean> {
         this.value = value;
     }
 
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
-
     @Override
-    public Boolean evaluate(EvaluationContext context) throws Exception {
+    public Boolean evaluate(EvaluationContext context) {
         return value;
     }
 

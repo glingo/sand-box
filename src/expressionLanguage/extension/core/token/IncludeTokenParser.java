@@ -5,16 +5,16 @@ import expressionLanguage.extension.core.expression.MapExpression;
 import expressionLanguage.model.position.Position;
 import expressionLanguage.model.tree.IncludeNode;
 import expressionLanguage.model.tree.Node;
-import expressionLanguage.parser.Parser;
 import expressionLanguage.token.Token;
 import expressionLanguage.token.TokenStream;
 import expressionLanguage.token.Type;
 import expressionLanguage.token.parser.TokenParser;
+import expressionLanguage.token.parser.TokenStreamParser;
 
 public class IncludeTokenParser implements TokenParser {
 
     @Override
-    public Node parse(Token token, Parser parser) throws Exception {
+    public Node parse(Token token, TokenStreamParser parser) {
 
         TokenStream stream = parser.getStream();
         Position position = token.getPosition();
@@ -39,7 +39,7 @@ public class IncludeTokenParser implements TokenParser {
                 mapExpression = (MapExpression) parsedExpression;
             } else {
                 String msg = String.format("Unexpected expression '%1s' at line %s in file %s.", parsedExpression .getClass().getCanonicalName(), token.getPosition(), stream.getFilename());
-                throw new Exception(msg);
+                throw new IllegalStateException(msg);
             }
 
         }

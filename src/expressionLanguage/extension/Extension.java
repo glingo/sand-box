@@ -2,13 +2,12 @@ package expressionLanguage.extension;
 
 import expressionLanguage.filter.Filter;
 import expressionLanguage.function.Function;
-import expressionLanguage.operator.BinaryOperator;
-import expressionLanguage.operator.UnaryOperator;
+import expressionLanguage.model.visitor.NodeVisitor;
+import expressionLanguage.operator.Operator;
 import expressionLanguage.test.Test;
 import expressionLanguage.token.parser.TokenParser;
 import java.util.List;
 import java.util.Map;
-import templating.extension.NodeVisitorFactory;
 
 public interface Extension {
 
@@ -47,25 +46,11 @@ public interface Extension {
      *
      * @return A list of TokenParsers. It is okay to return null.
      */
-    default List<TokenParser> getTokenParsers(){
+    default Map<String, TokenParser> getTokenParsers(){
         return null;
     }
 
-    /**
-     * Use this method to provide custom binary operators.
-     *
-     * @return A list of Operators. It is okay to return null;
-     */
-    default List<BinaryOperator> getBinaryOperators(){
-        return null;
-    }
-
-    /**
-     * Use this method to provide custom unary operators.
-     *
-     * @return A list of Operators. It is okay to return null;
-     */
-    default List<UnaryOperator> getUnaryOperators(){
+    default Map<String, Operator> getOperators(){
         return null;
     }
 
@@ -83,7 +68,7 @@ public interface Extension {
      *
      * @return a list of node visitors
      */
-    default List<NodeVisitorFactory> getNodeVisitors(){
+    default List<NodeVisitor> getVisitors(){
         return null;
     }
 }

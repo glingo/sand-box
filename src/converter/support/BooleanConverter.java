@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Convert to a boolean by parsing the value as a string
  */
-public class BooleanConverter implements Converter<Boolean> {
+public class BooleanConverter implements Converter<Object, Boolean> {
 
     @Override
     public List<Object> getTypes() {

@@ -2,13 +2,9 @@ package expressionLanguage.model.tree;
 
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.Expression;
-import expressionLanguage.macro.Macro;
+import expressionLanguage.function.Function;
 import expressionLanguage.model.position.Position;
 import expressionLanguage.scope.ScopeChain;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class MacroNode extends Node {
@@ -36,51 +32,77 @@ public class MacroNode extends Node {
 //        visitor.visit(this);
 //    }
 
-    public Macro getMacro() {
-        return new Macro() {
+    public Function getMacro() {
+        return Function.builder()
+                .named(name)
+                .evaluation((EvaluationContext context, Map<String, Object> macroArgs) -> {
+                    ScopeChain scopeChain = context.getScopeChain();
+                    scopeChain.pushLocalScope();
+                    getArgs().getArgs().stream().forEach((arg) -> {
+                        Expression<?> valueExpression = arg.getValue();
+                        if (valueExpression == null) {
+                            scopeChain.put(arg.getName(), null);
+                        } else {
+                            scopeChain.put(arg.getName(), valueExpression.evaluate(context));
+                        }
+                    });
+                    
+                    // scope for user provided arguments
+                    scopeChain.pushScope(macroArgs);
 
-            @Override
-            public List<String> getArgumentNames() {
-                List<String> names = new ArrayList<>();
-                getArgs().getNamedArgs().stream().forEach((arg) -> {
-                    names.add(arg.getName());
-                });
-                return names;
-            }
+//                    getBody().render(self, writer, context);
 
-            @Override
-            public String getName() {
-                return name;
-            }
+                    scopeChain.popScope(); // user arguments
+                    scopeChain.popScope(); // default arguments
 
-            @Override
-            public String call(EvaluationContext context, Map<String, Object> macroArgs) throws Exception {
-                Writer writer = new StringWriter();
-                ScopeChain scopeChain = context.getScopeChain();
+                    return "";
+                })
+                .build();
+                
+//                new Macro() {
+//
+//            @Override
+//            public List<String> getArgumentNames() {
+//                List<String> names = new ArrayList<>();
+//                getArgs().getNamedArgs().stream().forEach((arg) -> {
+//                    names.add(arg.getName());
+//                });
+//                return names;
+//            }
+//
+//            @Override
+//            public String getName() {
+//                return name;
+//            }
+//
+//            @Override
+//            public String call(EvaluationContext context, Map<String, Object> macroArgs) throws Exception {
+//                Writer writer = new StringWriter();
+//                ScopeChain scopeChain = context.getScopeChain();
+//
+//                // scope for default arguments
+//                scopeChain.pushLocalScope();
+//                for (NamedArgumentNode arg : getArgs().getNamedArgs()) {
+//                    Expression<?> valueExpression = arg.getValueExpression();
+//                    if (valueExpression == null) {
+//                        scopeChain.put(arg.getName(), null);
+//                    } else {
+//                        scopeChain.put(arg.getName(), arg.getValueExpression().evaluate(context));
+//                    }
+//                }
+//
+//                // scope for user provided arguments
+//                scopeChain.pushScope(macroArgs);
+//                
+////                getBody().render(self, writer, context);
+//
+//                scopeChain.popScope(); // user arguments
+//                scopeChain.popScope(); // default arguments
+//
+//                return writer.toString();
+//            }
 
-                // scope for default arguments
-                scopeChain.pushLocalScope();
-                for (NamedArgumentNode arg : getArgs().getNamedArgs()) {
-                    Expression<?> valueExpression = arg.getValueExpression();
-                    if (valueExpression == null) {
-                        scopeChain.put(arg.getName(), null);
-                    } else {
-                        scopeChain.put(arg.getName(), arg.getValueExpression().evaluate(context));
-                    }
-                }
-
-                // scope for user provided arguments
-                scopeChain.pushScope(macroArgs);
-
-//                getBody().render(self, writer, context);
-
-                scopeChain.popScope(); // user arguments
-                scopeChain.popScope(); // default arguments
-
-                return writer.toString();
-            }
-
-        };
+//        };
     }
 
     public BodyNode getBody() {

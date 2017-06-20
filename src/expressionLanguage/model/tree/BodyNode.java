@@ -1,8 +1,10 @@
 package expressionLanguage.model.tree;
 
 import expressionLanguage.model.position.Position;
+import expressionLanguage.model.visitor.NodeVisitor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class BodyNode extends Node {
 
@@ -38,11 +40,13 @@ public class BodyNode extends Node {
 //            child.render(self, writer, context);
 //        }
 //    }
-//
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
+
+    @Override
+    public void accept(NodeVisitor visitor) {
+        super.accept(visitor);
+        
+        this.children.forEach((node) -> node.accept(visitor));
+    }
 
     public List<Node> getChildren() {
         return children;

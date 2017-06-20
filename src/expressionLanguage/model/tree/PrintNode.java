@@ -2,11 +2,6 @@ package expressionLanguage.model.tree;
 
 import expressionLanguage.expression.Expression;
 import expressionLanguage.model.position.Position;
-import templating.EvaluationContext;
-import templating.template.Template;
-import templating.extension.NodeVisitor;
-import java.io.Writer;
-import utils.ObjectUtils;
 
 public class PrintNode extends Node {
 
@@ -23,11 +18,6 @@ public class PrintNode extends Node {
 //        if (var != null) {
 //            writer.write(ObjectUtils.nullSafeToString(var));
 //        }
-//    }
-//
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
 //    }
 
     public Expression<?> getExpression() {

@@ -8,7 +8,7 @@ import java.util.Map;
 public class ContainsExpression extends BinaryExpression<Boolean> {
 
     @Override
-    public Boolean evaluate(EvaluationContext context) throws Exception {
+    public Boolean evaluate(EvaluationContext context) {
         Object leftValue = getLeftExpression().evaluate(context);
 
         if (leftValue == null) {

@@ -2,7 +2,6 @@ package expressionLanguage.extension.core.expression;
 
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.Expression;
-import expressionLanguage.model.position.Position;
 import expressionLanguage.model.tree.ArgumentsNode;
 
 /**
@@ -21,7 +20,7 @@ public class FilterInvocationExpression implements Expression<Object> {
     }
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
         // see FilterExpression.java
         throw new UnsupportedOperationException();
     }

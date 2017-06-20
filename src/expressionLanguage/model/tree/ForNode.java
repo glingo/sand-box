@@ -2,11 +2,7 @@ package expressionLanguage.model.tree;
 
 import expressionLanguage.expression.Expression;
 import expressionLanguage.model.position.Position;
-import templating.EvaluationContext;
-import templating.scope.ScopeChain;
-import templating.template.Template;
-import templating.extension.NodeVisitor;
-import java.io.Writer;
+import expressionLanguage.model.visitor.NodeVisitor;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -32,6 +28,14 @@ public class ForNode extends Node {
         this.elseBody = elseBody;
     }
 
+    @Override
+    public void accept(NodeVisitor visitor) {
+        super.accept(visitor);
+//        Object iterableEvaluation = iterableExpression.evaluate(self, context);
+//        Iterable<?> iterable;
+//
+    }
+    
 //    @Override
 //    public void render(Template self, Writer writer, EvaluationContext context) throws Exception {
 //        Object iterableEvaluation = iterableExpression.evaluate(self, context);

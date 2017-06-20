@@ -10,7 +10,7 @@ import expressionLanguage.expression.BinaryExpression;
 public class ConcatenateExpression extends BinaryExpression<Object> {
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
 
         Object left = getLeftExpression().evaluate(context);
         Object right = getRightExpression().evaluate(context);

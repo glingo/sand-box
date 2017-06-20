@@ -1,15 +1,13 @@
 package expressionLanguage.model.position;
 
-import resource.reference.ResourceReference;
-
 public class Position {
     
-    private final ResourceReference resource;
+    private final String name;
     private final int line;
     private final int column;
 
-    public Position(ResourceReference resource, int line, int column) {
-        this.resource = resource;
+    public Position(String name, int line, int column) {
+        this.name = name;
         this.line = line;
         this.column = column;
     }
@@ -24,6 +22,6 @@ public class Position {
 
     @Override
     public String toString() {
-        return String.format("%s (Line: %d, Column: %d)", resource, line, column);
+        return String.format("%s (Line: %d, Column: %d)", name, line, column);
     }
 }

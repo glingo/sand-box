@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Convert to a {@link BigDecimal} by parsing the value as a string
  */
-public class BigDecimalConverter implements Converter<BigDecimal> {
+public class BigDecimalConverter implements Converter<Object, BigDecimal> {
 
     @Override
     public List<Object> getTypes() {

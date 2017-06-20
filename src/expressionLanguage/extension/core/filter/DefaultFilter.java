@@ -1,5 +1,6 @@
 package expressionLanguage.extension.core.filter;
 
+import expressionLanguage.extension.core.test.EmptyTest;
 import expressionLanguage.filter.Filter;
 import expressionLanguage.test.Test;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class DefaultFilter implements Filter {
         Object defaultObj = args.get("default");
 
         Test emptyTest = new EmptyTest();
-        if (emptyTest.apply(input, new HashMap<>())) {
+        if (emptyTest.apply(input)) {
             return defaultObj;
         }
         return input;

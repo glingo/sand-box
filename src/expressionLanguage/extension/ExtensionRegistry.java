@@ -2,12 +2,11 @@ package expressionLanguage.extension;
 
 import expressionLanguage.filter.Filter;
 import expressionLanguage.function.Function;
-import expressionLanguage.operator.BinaryOperator;
-import expressionLanguage.operator.UnaryOperator;
+import expressionLanguage.model.visitor.NodeVisitor;
+import expressionLanguage.operator.Operator;
 import expressionLanguage.test.Test;
 import expressionLanguage.token.parser.TokenParser;
 import java.util.*;
-import templating.extension.NodeVisitorFactory;
 
 /**
  * Storage for the extensions and the components retrieved from the various
@@ -18,27 +17,22 @@ public class ExtensionRegistry {
     /**
      * Extensions
      */
-    private final HashMap<Class<? extends Extension>, Extension> extensions = new HashMap<>();
-
+    private final Collection<Extension> extensions = new ArrayList();
+    
     /**
-     * Unary operators used during the lexing phase.
+     * Operators used during the lexing phase.
      */
-    private final Map<String, UnaryOperator> unaryOperators = new HashMap<>();
-
-    /**
-     * Binary operators used during the lexing phase.
-     */
-    private final Map<String, BinaryOperator> binaryOperators = new HashMap<>();
+    private Map<String, Operator> operators;
 
     /**
      * Token parsers used during the parsing phase.
      */
-    private final Map<String, TokenParser> tokenParsers = new HashMap<>();
+    private Map<String, TokenParser> tokenParsers = new HashMap<>();
 
     /**
-     * Node visitors available during the parsing phase.
+     * Visitors available during the parsing phase.
      */
-    private final List<NodeVisitorFactory> nodeVisitors = new ArrayList<>();
+    private final List<NodeVisitor> visitors = new ArrayList<>();
 
     /**
      * Filters used during the evaluation phase.
@@ -59,39 +53,20 @@ public class ExtensionRegistry {
      * Global variables available during the evaluation phase.
      */
     private final Map<String, Object> globalVariables = new HashMap<>();
-
-    public ExtensionRegistry(Collection<? extends Extension> extensions) {
+    
+    public ExtensionRegistry() {
+    }
+    
+    public ExtensionRegistry(Collection<Extension> extensions) {
         addExtensions(extensions);
     }
     
-    private void addExtensions(Collection<? extends Extension> extensions) {
-        extensions.stream().forEach(this::addExtension);
+    private void addExtensions(Collection<Extension> extensions) {
+        extensions.forEach(this::addExtension);
     }
     
     private void addExtension(Extension extension) {
         
-        List<TokenParser> tParsers = extension.getTokenParsers();
-        if (tParsers != null) {
-            tParsers.stream().forEach((tokenParser) -> {
-                this.tokenParsers.put(tokenParser.getTag(), tokenParser);
-            });
-        }
-        // binary operators
-        List<BinaryOperator> bOperators = extension.getBinaryOperators();
-        if (bOperators != null) {
-            bOperators.stream().filter((operator) -> (!this.binaryOperators.containsKey(operator.getSymbol()))).forEach((operator) -> {
-                // disallow overriding core operators
-                this.binaryOperators.put(operator.getSymbol(), operator);
-            });
-        }
-        // unary operators
-        List<UnaryOperator> uOperators = extension.getUnaryOperators();
-        if (uOperators != null) {
-            uOperators.stream().filter((operator) -> (!this.unaryOperators.containsKey(operator.getSymbol()))).forEach((operator) -> {
-                // disallow override core operators
-                this.unaryOperators.put(operator.getSymbol(), operator);
-            });
-        }
         // filters
         Map<String, Filter> efilters = extension.getFilters();
         if (efilters != null) {
@@ -113,13 +88,13 @@ public class ExtensionRegistry {
             this.globalVariables.putAll(eglobalVariables);
         }
         
-        List<NodeVisitorFactory> nVisitors = extension.getNodeVisitors();
+        List<NodeVisitor> visitors = extension.getVisitors();
         
-        if (nVisitors != null) {
-            this.nodeVisitors.addAll(nVisitors);
+        if (visitors != null) {
+            this.visitors.addAll(visitors);
         }
         
-        this.extensions.put(extension.getClass(), extension);
+        this.extensions.add(extension);
     }
 
     public Filter getFilter(String name) {
@@ -134,16 +109,20 @@ public class ExtensionRegistry {
         return this.functions.get(name);
     }
 
-    public Map<String, BinaryOperator> getBinaryOperators() {
-        return this.binaryOperators;
+    public Map<String, Operator> getOperators() {
+        if (this.operators == null) {
+            this.operators = new HashMap<>();
+        }
+
+        this.extensions.stream()
+                .map((extension) -> extension.getOperators())
+                .forEach(this.operators::putAll);
+
+        return operators;
     }
 
-    public Map<String, UnaryOperator> getUnaryOperators() {
-        return this.unaryOperators;
-    }
-
-    public List<NodeVisitorFactory> getNodeVisitors() {
-        return this.nodeVisitors;
+    public List<NodeVisitor> getVisitors() {
+        return this.visitors;
     }
 
     public Map<String, Object> getGlobalVariables() {
@@ -151,6 +130,40 @@ public class ExtensionRegistry {
     }
 
     public Map<String, TokenParser> getTokenParsers() {
-        return this.tokenParsers;
+        if (this.tokenParsers == null) {
+            this.tokenParsers = new HashMap<>();
+        }
+
+        this.extensions.stream()
+                .map((extension) -> extension.getTokenParsers())
+                .forEach(this.tokenParsers::putAll);
+
+        return tokenParsers;
+    }
+    
+    public static ExtensionRegistryBuilder builder() {
+        return new ExtensionRegistryBuilder();
+    }
+    
+    public static class ExtensionRegistryBuilder {
+        
+        private Collection<Extension> extensions = new ArrayList<>();
+        
+        public ExtensionRegistryBuilder with(Extension extension) {
+            this.extensions.add(extension);
+            return this;
+        }
+        
+        public ExtensionRegistryBuilder and(Extension extension) {
+            return with(extension);
+        }
+        
+        public ExtensionRegistry build() {
+            ExtensionRegistry registry = new ExtensionRegistry();
+            
+            registry.addExtensions(extensions);
+            
+            return registry;
+        }
     }
 }

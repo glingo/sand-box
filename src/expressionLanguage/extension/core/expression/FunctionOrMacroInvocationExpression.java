@@ -2,7 +2,12 @@ package expressionLanguage.extension.core.expression;
 
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.Expression;
+import expressionLanguage.function.Function;
 import expressionLanguage.model.tree.ArgumentsNode;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class  FunctionOrMacroInvocationExpression implements Expression<Object> {
 
@@ -16,28 +21,23 @@ public class  FunctionOrMacroInvocationExpression implements Expression<Object> 
     }
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
-        return null;
-//        Function function = context.getExtensionRegistry().getFunction(functionName);
-//        if (function != null) {
-//            return applyFunction(context, function, args);
-//        }
-//        return self.macro(context, functionName, args, false);
+    public Object evaluate(EvaluationContext context) {
+//        return null;
+        Function function = context.getExtensionRegistry().getFunction(functionName);
+        if (function != null) {
+            return applyFunction(context, function, args);
+        }
+        return context.getHierarchy().get().macro(context, functionName, args, false);
     }
 
-//    private Object applyFunction(EvaluationContext context, Function function, ArgumentsNode args) throws Exception {
-//        List<Object> arguments = new ArrayList<>();
-//
-//        Collections.addAll(arguments, args);
-//
-//        Map<String, Object> namedArguments = args.getArgumentMap(context, function);
-//        return function.execute(namedArguments);
-//    }
+    private Object applyFunction(EvaluationContext context, Function function, ArgumentsNode args) {
+        List<Object> arguments = new ArrayList<>();
 
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
+        Collections.addAll(arguments, args);
+
+        Map<String, Object> namedArguments = args.getArgumentMap(context, function);
+        return function.evaluate(context, namedArguments);
+    }
 
     public String getFunctionName() {
         return functionName;

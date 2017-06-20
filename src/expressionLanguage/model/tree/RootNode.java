@@ -1,6 +1,7 @@
 package expressionLanguage.model.tree;
 
 import expressionLanguage.model.position.Position;
+import expressionLanguage.model.visitor.NodeVisitor;
 
 public class RootNode extends Node {
 
@@ -17,10 +18,14 @@ public class RootNode extends Node {
 //        body.render(self, writer, context);
 //    }
 //
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
+    @Override
+    public void accept(NodeVisitor visitor) {
+        super.accept(visitor);
+        
+        if (getBody() != null) {
+            getBody().accept(visitor);
+        }
+    }
 
     public BodyNode getBody() {
         return body;

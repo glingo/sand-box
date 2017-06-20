@@ -1,262 +1,166 @@
 package templating;
 
-import java.io.IOException;
-import templating.template.Template;
-import templating.extension.ExtensionRegistry;
-import templating.lexer.Lexer;
-import templating.loader.LoaderInterface;
-import templating.parser.Parser;
-import templating.scope.ScopeChain;
-import templating.token.TokenStream;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import templating.node.RootNode;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import utils.StringUtils;
 
-/**
- * The main class used for compiling templates. The PebbleEngine is responsible
- * for delegating responsibility to the lexer, parser, compiler, and template
- * cache.
- */
 public class Engine {
 
-    private final LoaderInterface loader;
-    
-    private final Lexer lexer;
-    
-    private final Parser parser;
+    private Environment environment;
 
-    private final boolean strictVariables;
+    private Tokenizer tokenizer;
 
-    private final Locale defaultLocale;
+    private Map<String, Expression> expressions;
 
-    private final ExecutorService executorService;
+    public Template load(String path) {
+        Source source = getEnvironment().load(path);
+        List<Token> tokens = this.tokenizer.tokenize(source);
+        Context context = new Context();
+        TokenStream stream = new TokenStream(tokens, path);
 
-    private final ExtensionRegistry extensionRegistry;
+        Token token = stream.current();
+        while (!Token.isEOF(token)) {
+//            System.out.println("Reading Token : " + token);
+            switch (token.getType()) {
+                case "comment":
+                    System.out.println("// " + token.getValue());
+                    token = stream.next();
+                    break;
+                case "execute":
+                    // evaluate the expression
+                    String value = token.getValue();
+                    getExpressions().forEach((n, e) -> {
+                        Matcher m = e.getPattern().matcher(value);
+                        if (m.find()) {
+                            String name = m.group("name");
+                            String expression = m.group("expression");
 
-    public Engine(LoaderInterface loader, 
-        Lexer lexer,
-        Parser parser,
-        ExtensionRegistry extensionRegistry,
-        boolean strictVariables, 
-        Locale defaultLocale, 
-        ExecutorService executorService) {
+                            e.getConsumer().accept(expression, context);
 
-        this.loader = loader;
-        this.lexer = lexer;
-        this.parser = parser;
-        this.extensionRegistry = extensionRegistry;
-        this.strictVariables = strictVariables;
-        this.defaultLocale = defaultLocale;
-        this.executorService = executorService;
-    }
-        
-    /**
-     * Loads, parses, and compiles a template into an instance of PebbleTemplate
-     * and returns this instance.
-     *
-     * @param templateName The name of the template
-     * @return Template The compiled version of the template
-     * @throws Exception Thrown if an error occurs while parsing the template.
-     */
-    public Template getTemplate(final String templateName) throws Exception {
+                            System.out.println(String.format("Expression : %s %s", name, expression));
+                            if (m.groupCount() > 2) {
+                                String operator = m.group("operator");
+                                String nested = m.group("nested");
+                                System.out.println(String.format("%s %s", operator, nested));
+                            }
+                        }
+                    });
+                    token = stream.next();
+                    break;
+                default:
+                    token = stream.next();
+                    break;
+            }
 
-        /*
-         * template name will be null if user uses the extends tag with an
-         * expression that evaluates to null
-         */
-        if (templateName == null) {
-            return null;
         }
 
-        if (this.loader == null) {
-            throw new Exception("Loader has not yet been specified.");
+//        stream.getTokens().forEach(System.out::println);
+        return Template.builder().tokens(stream.getTokens()).build();
+    }
+
+    public void render(Template template, Renderer renderer) {
+        renderer.render(template, this.environment);
+
+//        stream.getTokens().forEach(System.out::println);
+    }
+
+    public Map<String, Expression> getExpressions() {
+        return expressions;
+    }
+
+    public void setExpressions(Map<String, Expression> expressions) {
+        this.expressions = expressions;
+    }
+
+    public Tokenizer getTokenizer() {
+        return tokenizer;
+    }
+
+    public void setTokenizer(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
+
+    public static EngineBuilder builder() {
+        return new EngineBuilder();
+    }
+
+    public static class EngineBuilder {
+
+        private Environment environment;
+
+        private Tokenizer tokenizer;
+        private Map<String, Expression> expressions = new HashMap<>();
+
+        public EngineBuilder environment(Environment environment) {
+            this.environment = environment;
+            return this;
         }
 
-        final Engine self = this;
-        final Object cacheKey = this.loader.createCacheKey(templateName);
-
-        Reader templateReader = self.retrieveReaderFromLoader(self.loader, cacheKey);
-        TokenStream tokenStream = this.lexer.tokenize(templateReader, templateName);
-
-        RootNode root = this.parser.parse(tokenStream);
-
-        Template instance = new Template(self, root, templateName);
-
-        extensionRegistry.getNodeVisitors().stream().forEach((visitorFactory) -> {
-            visitorFactory.createVisitor(instance).visit(root);
-        });
-
-        return instance;
-    }
-    
-    public void evaluate(Template template) throws Exception {
-        EvaluationContext context = initContext(template, null);
-        evaluate(template, context);
-    }
-
-    public void evaluate(Template template, Locale locale) throws Exception {
-        EvaluationContext context = initContext(template, locale);
-        evaluate(template, context);
-    }
-
-    public void evaluate(Template template, Map<String, Object> map) throws Exception {
-        EvaluationContext context = initContext(template, null);
-        context.getScopeChain().pushScope(map);
-        evaluate(template, context);
-    }
-
-    public void evaluate(Template template, Map<String, Object> map, Locale locale) throws Exception {
-        EvaluationContext context = initContext(template, locale);
-        context.getScopeChain().pushScope(map);
-        evaluate(template, context);
-    }
-    
-    /**
-     * This is the authoritative evaluate method. It will evaluate the template
-     * starting at the root node.
-     *
-     * @param writer  The writer used to write the final output of the template
-     * @param context The evaluation context
-     * @throws Exception     Thrown from the writer object
-     */
-    private void evaluate(Template template, EvaluationContext context) throws Exception {
-        
-        // Eval logic HERE 
-//        template.
-        
-//        rootNode.render(this, context);
-
-        /*
-         * If the current template has a parent then we know the current template
-         * was only used to evaluate a very small subset of tags such as "set" and "import".
-         * We now evaluate the parent template as to evaluate all of the actual content.
-         * When evaluating the parent template, it will check the child template for overridden blocks.
-         */
-        if (context.getHierarchy().getParent() != null) {
-            Template parent = context.getHierarchy().getParent();
-            context.getHierarchy().ascend();
-            evaluate(parent, context);
+        public EngineBuilder tokenizer(Tokenizer tokenizer) {
+            this.tokenizer = tokenizer;
+            return this;
         }
+
+        public EngineBuilder expression(String name, BiConsumer<String, Context> consumer) {
+            Expression expression = new Expression();
+            expression.setConsumer(consumer);
+            expression.setPattern(Pattern.compile(buildExpression(name, "")));
+            expressions.put(name, expression);
+            return this;
+        }
+
+        public EngineBuilder expression(String name, String operator, BiConsumer<String, Context> consumer) {
+            Expression expression = new Expression();
+            expression.setConsumer(consumer);
+            expression.setPattern(Pattern.compile(buildExpression(name, operator)));
+            expressions.put(name, expression);
+            return this;
+        }
+
+        // while .
+        // if .
+        // not .
+        // is .
+        // for . in .
+        private String buildExpression(String name, String operator) {
+            String base = "^"
+                    .concat("(?<name>").concat(Pattern.quote(name)).concat(")")
+                    .concat("(?<expression>.*)");
+
+            if (StringUtils.hasText(operator)) {
+                base = base
+                        .concat("(?<operator>").concat(Pattern.quote(operator)).concat("?+)")
+                        .concat("(?<nested>.*)");
+            }
+
+            return base;
+        }
+
+        public Engine build() {
+            Engine engine = new Engine();
+
+            engine.setTokenizer(tokenizer);
+            engine.setEnvironment(environment);
+            engine.setExpressions(expressions);
+
+            return engine;
+        }
+
     }
-    
-    
-    /**
-     * Initializes the evaluation context with settings from the engine.
-     *
-     * @param locale The desired locale
-     * @return The evaluation context
-     */
-    private EvaluationContext initContext(Template template, Locale locale) {
-        locale = locale == null ? getDefaultLocale() : locale;
-
-        // globals
-        Map<String, Object> globals = new HashMap<>();
-        globals.put("locale", locale);
-        globals.put("template", template);
-        ScopeChain scopeChain = new ScopeChain(globals);
-
-        // global vars provided from extensions
-        scopeChain.pushScope(getExtensionRegistry().getGlobalVariables());
-
-        EvaluationContext context = new EvaluationContext(template,
-                isStrictVariables(), locale,
-                getExtensionRegistry(), getExecutorService(),
-                new ArrayList<>(), scopeChain, null);
-        return context;
-    }
-
-
-    /**
-     * This method calls the loader and fetches the reader. We use this method
-     * to handle the generic cast.
-     *
-     * @param loader the loader to use fetch the reader.
-     * @param cacheKey the cache key to use.
-     * @return the reader object.
-     * @throws Exception thrown when the template could not be loaded.
-     */
-    private <T> Reader retrieveReaderFromLoader(LoaderInterface<T> loader, Object cacheKey) throws Exception {
-        // We make sure within getTemplate() that we use only the same key for
-        // the same loader and hence we can be sure that the cast is safe.
-        @SuppressWarnings("unchecked")
-        T casted = (T) cacheKey;
-        return loader.getReader(casted);
-    }
-
-    /**
-     * Returns the loader
-     *
-     * @return The loader
-     */
-    public LoaderInterface<?> getLoader() {
-        return loader;
-    }
-
-    /**
-     * Returns the template cache
-     *
-     * @return The template cache
-     */
-//    public Cache<Object, Template> getTemplateCache() {
-//        return templateCache;
-//    }
-
-    /**
-     * Returns the strict variables setting
-     *
-     * @return The strict variables setting
-     */
-    public boolean isStrictVariables() {
-        return strictVariables;
-    }
-
-    /**
-     * Returns the default locale
-     *
-     * @return The default locale
-     */
-    public Locale getDefaultLocale() {
-        return defaultLocale;
-    }
-
-    /**
-     * Returns the executor service
-     *
-     * @return The executor service
-     */
-    public ExecutorService getExecutorService() {
-        return executorService;
-    }
-
-    /**
-     * Returns the syntax which is used by this PebbleEngine.
-     *
-     * @return the syntax used by the PebbleEngine.
-     */
-//    public Syntax getSyntax() {
-//        return this.syntax;
-//    }
-
-    /**
-     * Returns the extension registry.
-     *
-     * @return The extension registry
-     */
-    public ExtensionRegistry getExtensionRegistry() {
-        return extensionRegistry;
-    }
-
-    /**
-     * Returns the tag cache
-     *
-     * @return The tag cache
-     */
-//    public Cache<BaseTagCacheKey, Object> getTagCache() {
-//        return this.tagCache;
-//    }
-
 }

@@ -2,46 +2,34 @@ package expressionLanguage.extension.core.expression;
 
 import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.BinaryExpression;
-import expressionLanguage.model.tree.ArgumentsNode;
-import expressionLanguage.model.tree.TestInvocationExpression;
+import expressionLanguage.expression.Expression;
 import expressionLanguage.test.Test;
-
-import java.util.Map;
-import javax.management.AttributeNotFoundException;
 
 public class PositiveTestExpression extends BinaryExpression<Object> {
 
     private Test cachedTest;
 
     @Override
-    public Object evaluate(EvaluationContext context) throws Exception {
+    public Object evaluate(EvaluationContext context) {
 
-        TestInvocationExpression testInvocation = (TestInvocationExpression) getRightExpression();
-        ArgumentsNode args = testInvocation.getArgs();
+        Expression testInvocation = getRightExpression();
 
         if (cachedTest == null) {
-            String testName = testInvocation.getTestName();
+            String testName = testInvocation.getClass().getName();
 
-            cachedTest = context.getExtensionRegistry().getTest(testInvocation.getTestName());
+            cachedTest = context.getExtensionRegistry().getTest(testName);
 
             if (cachedTest == null) {
-                String msg = String.format("Test [%s] does not exist at line %s  in file %s.", testName);
-                throw new Exception(msg);
+                String msg = String.format("Test [%s] does not exist at line %s.", testName);
+                throw new IllegalStateException(msg);
             }
         }
         
         Test test = cachedTest;
 
-        Map<String, Object> namedArguments = args.getArgumentMap(context, test);
-
-        Object input;
-        try {
-            input = getLeftExpression().evaluate(context);
-        } catch (AttributeNotFoundException e) {
-            input = null;
-        }
+        Object input = getLeftExpression().evaluate(context);
         
-        return test.apply(input, namedArguments);
+        return test.apply(input);
 
     }
 }

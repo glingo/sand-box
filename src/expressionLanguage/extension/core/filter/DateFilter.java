@@ -6,7 +6,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import templating.extension.escaper.SafeString;
 
 public class DateFilter implements Filter {
 
@@ -48,6 +47,6 @@ public class DateFilter implements Filter {
             date = (Date) input;
         }
 
-        return new SafeString(intendedFormat.format(date));
+        return intendedFormat.format(date);
     }
 }

@@ -1,0 +1,9 @@
+C'est la démo !
+
+{% set name = "World" %}
+
+Hello {{ name }}
+
+{% for item in [3, 2, 1, 0] %}
+    ... {{ item }} !
+{% endfor %} 

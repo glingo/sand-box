@@ -1,15 +1,18 @@
 package expressionLanguage.token.parser;
 
+import expressionLanguage.model.tree.BodyNode;
 import expressionLanguage.model.tree.Node;
-import expressionLanguage.parser.Parser;
 import expressionLanguage.token.Token;
+import expressionLanguage.token.TokenStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A TokenParser is responsible for converting a stream of Tokens into a Node. A
  * TokenParser often has to temporarily delegate responsibility.
- *
  */
-public interface TokenParser {
+public interface TokenParser extends Parser<TokenStream, Node> {
 
     /**
      * The "tag" is used to determine when to use a particular instance of a
@@ -18,8 +21,24 @@ public interface TokenParser {
      *
      * @return The tag used to define this TokenParser.
      */
-    String getTag();
+    default String getTag() {
+        return this.getClass().getSimpleName().replace("TokenParser", "").toLowerCase();
+    }
+    
+    @Override
+    default Node parse(TokenStream stream) {
+        return parse(stream, Token::isEOF);
+    }
 
+    public default Node parse(TokenStream stream, Predicate<Token> stop) {
+        Token current = stream.current();
+        List<Node> children = new ArrayList<>();
+        while (!stop.test(current)) {
+            children.add(parse(stream));
+        }
+        return new BodyNode(current.getPosition(), children);
+    }
+    
     /**
      * The TokenParser is responsible to convert all the necessary tokens into
      * appropriate Nodes. It can access tokens using parser.getTokenStream().
@@ -49,8 +68,10 @@ public interface TokenParser {
      * @param parser
      *            the parser which should be used to parse the token
      * @return A node representation of the token
-     * @throws Exception Thrown if an error occurs while parsing the token
      */
-    Node parse(Token token, Parser parser) throws Exception;
+    default Node parse(Token token, TokenStreamParser parser) {
+        TokenStream stream = parser.getStream();
+        return parse(stream);
+    }
 
 }

@@ -1,12 +1,10 @@
 package expressionLanguage.model.tree;
 
+import expressionLanguage.EvaluationContext;
 import expressionLanguage.model.position.Position;
-import templating.template.Block;
-import templating.EvaluationContext;
-import templating.template.Template;
-import templating.extension.NodeVisitor;
+import expressionLanguage.model.template.Block;
+import expressionLanguage.model.template.Template;
 import java.io.IOException;
-import java.io.Writer;
 
 public class BlockNode extends Node {
 
@@ -43,7 +41,7 @@ public class BlockNode extends Node {
             }
 
             @Override
-            public void evaluate(Template self, Writer writer, EvaluationContext context) throws Exception, IOException {
+            public void evaluate(Template self, EvaluationContext context) {
 //                body.render(self, writer, context);
             }
         };

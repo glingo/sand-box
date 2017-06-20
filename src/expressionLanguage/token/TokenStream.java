@@ -37,9 +37,8 @@ public class TokenStream {
      *
      * @param type The type of token that we expect
      * @return Token The current token
-     * @throws Exception Throws exception if expectation fails
      */
-    public Token expect(Type type) throws Exception {
+    public Token expect(Type type) {
         return expect(type, null);
     }
 
@@ -51,22 +50,16 @@ public class TokenStream {
      * @param type The type of token that we expect
      * @param value The expected value of the token
      * @return Token The current token
-     * @throws Exception Thrown if expectation fails
      */
-    public Token expect(Type type, String value) throws Exception {
+    public Token expect(Type type, String value) {
         Token token = tokens.get(current);
 
-        boolean success;
-        if (value == null) {
-            success = token.test(type);
-        } else {
-            success = token.test(type, value);
-        }
+        boolean success = token.isA(type, value);
 
         if (!success) {
             String message = String.format("Unexpected token of value \"%s\" and type %s, expected token of type %s",
                     token.getValue(), token.getType().toString(), type);
-            throw new Exception(message);
+            throw new IllegalStateException(message);
         }
         this.next();
         return token;
@@ -91,9 +84,6 @@ public class TokenStream {
         return this.tokens.get(this.current + number);
     }
 
-    public boolean isEOF() {
-        return this.tokens.get(current).getType().equals(Type.EOF);
-    }
 
     @Override
     public String toString() {

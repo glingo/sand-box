@@ -1,7 +1,7 @@
 package expressionLanguage.model.tree;
 
 import expressionLanguage.model.position.Position;
-import expressionLanguage.model.tree.visitor.NodeVisitor;
+import expressionLanguage.model.visitor.NodeVisitor;
 
 public abstract class Node {
 
@@ -15,7 +15,7 @@ public abstract class Node {
         return position;
     }
 
-    public void visit (NodeVisitor nodeVisitor) {
-        nodeVisitor.accept(this);
+    public void accept(NodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

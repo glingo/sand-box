@@ -1,12 +1,12 @@
 package expressionLanguage.filter;
 
-import templating.extension.core.*;
-import templating.extension.Filter;
-import templating.extension.Test;
+import expressionLanguage.EvaluationContext;
+import expressionLanguage.extension.core.test.EmptyTest;
+import expressionLanguage.test.Test;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class DefaultFilter implements Filter {
 
@@ -15,6 +15,17 @@ public class DefaultFilter implements Filter {
     public DefaultFilter() {
         argumentNames.add("default");
     }
+    
+    @Override
+    public String getName() {
+        return "default";
+    }
+
+    @Override
+    public Object evaluate(EvaluationContext context, Map<String, Object> args) {
+        
+    }
+    
 
     @Override
     public List<String> getArgumentNames() {
@@ -23,13 +34,14 @@ public class DefaultFilter implements Filter {
 
     @Override
     public Object apply(Object input, Map<String, Object> args) {
-
-        Object defaultObj = args.get("default");
-
-        Test emptyTest = new EmptyTest();
-        if (emptyTest.apply(input, new HashMap<>())) {
-            return defaultObj;
+        return filter(input, args.get("default"));
+    }
+    
+    public Object filter(Object input, Object orElse) {
+        if (new EmptyTest().apply(input)) {
+            return orElse;
         }
+        
         return input;
     }
 

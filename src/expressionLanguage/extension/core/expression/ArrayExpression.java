@@ -28,12 +28,11 @@ public class ArrayExpression implements Expression<List<?>> {
 //    }
 
     @Override
-    public List<?> evaluate(EvaluationContext context) throws Exception {
+    public List<?> evaluate(EvaluationContext context) {
         List<Object> returnValues = new ArrayList<>(values.size());
-        for (Expression<?> expr : values) {
-            Object value = expr == null ? null : expr.evaluate(context);
-            returnValues.add(value);
-        }
+        values.stream()
+            .map((expr) -> expr == null ? null : expr.evaluate(context))
+            .forEach(returnValues::add);
         return returnValues;
     }
 

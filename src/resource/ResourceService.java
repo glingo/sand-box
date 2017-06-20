@@ -1,10 +1,11 @@
 package resource;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
+import java.util.Optional;
+import resource.exceptions.ResourceException;
 import resource.loader.ResourceLoader;
 import resource.loader.ResourceLoaderDelegate;
 import resource.metatada.ResourceMetadata;
@@ -14,27 +15,38 @@ import resource.reference.ResourceReferenceExtractor;
 
 public class ResourceService {
     
-    private String name;
-    public String getName() {
-        return name;
-    }
-    public ResourceService(String name, ResourceLoader loader) {
-        this.name = name;
-        this.loader = loader;
-        this.extractor = ResourceReferenceExtractor.defaultExtractor();
+    private final Map<String, ResourceLoader> loaders;
+    
+    private final ResourceReferenceExtractor extractor;
+
+    public ResourceService(Map<String, ResourceLoader> loaders) {
+        this(loaders, ResourceReferenceExtractor.defaultExtractor());
     }
     
-    private ResourceLoader loader;
-    private ResourceReferenceExtractor extractor;
-
-    public ResourceService(ResourceLoader loader) {
-        this.name = UUID.randomUUID().toString();
-        this.loader = loader;
-        this.extractor = ResourceReferenceExtractor.defaultExtractor();
+    public ResourceService(Map<String, ResourceLoader> loaders, ResourceReferenceExtractor extractor) {
+        this.loaders = loaders;
+        this.extractor = extractor;
     }
     
     public ResourceMetadata metadata(ResourceReference reference) {
-        return new ResourceReferenceMetadata(this.loader, reference);
+        Optional<ResourceLoader> optional;
+        
+        switch(reference.getType()) {
+            case ResourceReference.ANY_TYPE:
+                optional = this.loaders.values().stream()
+                    .filter((loader) -> loader.exists(reference.getPath()))
+                    .findFirst();
+                break;
+                
+            default:
+                optional = Optional.of(this.loaders.get(reference.getType()));
+                break;
+        }
+        if (!optional.isPresent()) {
+            throw new ResourceException(String.format("Cannot load resource %s. Resource loader for type '%s' not configured", reference, reference.getType()));
+        }
+        
+        return new ResourceReferenceMetadata(optional.get(), reference);
     }
     
     public ResourceMetadata metadata(String path) {
@@ -43,41 +55,35 @@ public class ResourceService {
     }
     
     public InputStream load(String path) {
-        ResourceMetadata metadata = metadata(path);
-        return metadata.load();
+        return metadata(path).load();
     }
     
     public static ResourceServiceBuilder builder() {
         return new ResourceServiceBuilder();
     }
     
-    public static ResourceServiceBuilder builder(String name) {
-        return new ResourceServiceBuilder(name);
-    }
-    
     public static class ResourceServiceBuilder {
         
-        private Collection<ResourceLoader> loaders;
-        private String name;
+        private Map<String, ResourceLoader> loaders;
 
         public ResourceServiceBuilder() {
         }
 
-        public ResourceServiceBuilder(String name) {
-            this.name = name;
-        }
-        
-        public ResourceServiceBuilder with(ResourceLoader loader) {
+        public ResourceServiceBuilder with(String type, ResourceLoader loader) {
             if (Objects.isNull(this.loaders)) {
-                this.loaders = new ArrayList<>();
+                this.loaders = new HashMap<>();
             }
-            this.loaders.add(loader);
+            
+            if (!this.loaders.containsKey(type)) {
+                this.loaders.put(type, new ResourceLoaderDelegate());
+            }
+            
+            ((ResourceLoaderDelegate) this.loaders.get(type)).with(loader);
             return this;
         }
         
         public ResourceService build() {
-            ResourceLoader delegate = new ResourceLoaderDelegate(loaders);
-            ResourceService service = new ResourceService(name, delegate);
+            ResourceService service = new ResourceService(this.loaders);
             return service;
         }
     }

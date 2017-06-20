@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Convert to a byte by parsing the value as a string
  */
-public class ByteConverter implements Converter<Byte> {
+public class ByteConverter implements Converter<Object, Byte> {
 
     @Override
     public List<Object> getTypes() {

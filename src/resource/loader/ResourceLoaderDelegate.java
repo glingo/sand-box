@@ -3,16 +3,20 @@ package resource.loader;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import resource.exceptions.ResourceNotFoundException;
 
 public class ResourceLoaderDelegate implements ResourceLoader {
     
-    private final Collection<ResourceLoader> resourceLoaders;
+    private Collection<ResourceLoader> loaders = new ArrayList<>();
 
-    public ResourceLoaderDelegate(Collection<ResourceLoader> resourceLoaders) {
-        this.resourceLoaders = resourceLoaders;
+    public ResourceLoaderDelegate() {
+    }
+    
+    public ResourceLoaderDelegate(Collection<ResourceLoader> loaders) {
+        this.loaders = loaders;
     }
 
     @Override
@@ -28,6 +32,9 @@ public class ResourceLoaderDelegate implements ResourceLoader {
     public InputStream load(String path) {
         Optional<ResourceLoader> loader = matches(path);
         if (loader.isPresent()) {
+            
+            System.out.print("From : ");
+            System.out.println(loader.get().getClass().getName());
             return loader.get().load(path);
         }
         
@@ -49,8 +56,13 @@ public class ResourceLoaderDelegate implements ResourceLoader {
         return Optional.empty();
     }
     
+    public void with(ResourceLoader loader) {
+        this.loaders.add(loader);
+    }
+    
     private Optional<ResourceLoader> matches(String path) {
-        return this.resourceLoaders.stream()
-                .filter((loader) -> loader.exists(path)).findFirst();
+        return this.loaders.stream()
+                .filter((loader) -> loader.exists(path))
+                .findFirst();
     }
 }

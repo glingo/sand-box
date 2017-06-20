@@ -10,14 +10,9 @@ public class LiteralStringExpression implements Expression<String> {
     public LiteralStringExpression(String value) {
         this.value = value;
     }
-//
-//    @Override
-//    public void accept(NodeVisitor visitor) {
-//        visitor.visit(this);
-//    }
 
     @Override
-    public String evaluate(EvaluationContext context) throws Exception {
+    public String evaluate(EvaluationContext context) {
         return value;
     }
 

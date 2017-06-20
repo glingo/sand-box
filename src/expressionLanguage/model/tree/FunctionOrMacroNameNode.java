@@ -14,7 +14,7 @@ public class FunctionOrMacroNameNode extends Node implements Expression<String> 
     }
 
     @Override
-    public String evaluate(EvaluationContext context) throws Exception {
+    public String evaluate(EvaluationContext context) {
         throw new UnsupportedOperationException();
     }
 //

@@ -1,9 +1,7 @@
 package expressionLanguage.test;
 
-import expressionLanguage.NamedArguments;
-import java.util.Map;
+@FunctionalInterface
+public interface Test {
 
-public interface Test extends NamedArguments {
-
-    boolean apply(Object input, Map<String, Object> args);
+    boolean apply(Object input);
 }

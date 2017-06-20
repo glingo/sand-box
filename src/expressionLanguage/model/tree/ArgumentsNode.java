@@ -1,36 +1,23 @@
 package expressionLanguage.model.tree;
 
 import expressionLanguage.EvaluationContext;
-import expressionLanguage.NamedArguments;
+import expressionLanguage.function.Function;
 import expressionLanguage.model.position.Position;
-import expressionLanguage.model.tree.visitor.NodeVisitor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ArgumentsNode extends Node {
 
-    private final List<NamedArgumentNode> namedArgs;
+    private final List<ArgumentNode> args;
 
-    private final List<PositionalArgumentNode> positionalArgs;
-
-    public ArgumentsNode(Position position, List<PositionalArgumentNode> positionalArgs, List<NamedArgumentNode> namedArgs) {
+    public ArgumentsNode(Position position, List<ArgumentNode> args) {
         super(position);
-        this.positionalArgs = positionalArgs;
-        this.namedArgs = namedArgs;
+        this.args = args;
     }
 
-    @Override
-    public void visit(NodeVisitor visitor) {
-        visitor.accept(this);
-    }
-
-    public List<NamedArgumentNode> getNamedArgs() {
-        return namedArgs;
-    }
-
-    public List<PositionalArgumentNode> getPositionalArgs() {
-        return positionalArgs;
+    public List<ArgumentNode> getArgs() {
+        return args;
     }
 
     /**
@@ -43,44 +30,43 @@ public class ArgumentsNode extends Node {
      * @param invocableWithNamedArguments
      *            The named arguments object
      * @return Returns a map representaion of the arguments
-     * @throws Exception Thrown if an expected name argument does not exist
      */
-    public Map<String, Object> getArgumentMap(EvaluationContext context, NamedArguments invocableWithNamedArguments) throws Exception {
+    public Map<String, Object> getArgumentMap(EvaluationContext context, Function invocableWithNamedArguments) {
         Map<String, Object> result = new HashMap<>();
         List<String> argumentNames = invocableWithNamedArguments.getArgumentNames();
 
         if (argumentNames == null) {
 
             /* Some functions such as min and max use un-named varags */
-            if (positionalArgs != null && !positionalArgs.isEmpty()) {
-                for (int i = 0; i < positionalArgs.size(); i++) {
-                    result.put(String.valueOf(i), positionalArgs.get(i).getValueExpression().evaluate(context));
+            if (args != null && !args.isEmpty()) {
+                for (int i = 0; i < args.size(); i++) {
+                    result.put(String.valueOf(i), args.get(i).getValue().evaluate(context));
                 }
             }
         } else {
 
-            if (positionalArgs != null) {
+            if (args != null) {
                 int nameIndex = 0;
 
-                for (PositionalArgumentNode arg : positionalArgs) {
+                for (ArgumentNode arg : args) {
                     if (argumentNames.size() <= nameIndex) {
                         String msg = String.format("The argument at position %s is not allowed. Only %s argument(s) are allowed at line %s in file %s.", nameIndex + 1, argumentNames.size());
-                        throw new Exception(msg);
+                        throw new IllegalArgumentException(msg);
                     }
 
-                    result.put(argumentNames.get(nameIndex), arg.getValueExpression().evaluate(context));
+                    result.put(argumentNames.get(nameIndex), arg.getValue().evaluate(context));
                     nameIndex++;
                 }
             }
 
-            if (namedArgs != null) {
-                for (NamedArgumentNode arg : namedArgs) {
+            if (args != null) {
+                for (ArgumentNode arg : args) {
                     // check if user used an incorrect name
                     if (!argumentNames.contains(arg.getName())) {
                         String msg = String.format("The following named argument does not exist: %s at line %s in file %s", arg.getName());
-                        throw new Exception(msg);
+                        throw new IllegalArgumentException(msg);
                     }
-                    Object value = arg.getValueExpression() == null ? null : arg.getValueExpression().evaluate(context);
+                    Object value = arg.getValue() == null ? null : arg.getValue().evaluate(context);
                     result.put(arg.getName(), value);
                 }
             }

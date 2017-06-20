@@ -5,16 +5,17 @@ import expressionLanguage.model.position.Position;
 import expressionLanguage.model.tree.BodyNode;
 import expressionLanguage.model.tree.ForNode;
 import expressionLanguage.model.tree.Node;
-import expressionLanguage.parser.Parser;
+import expressionLanguage.token.parser.Parser;
 import expressionLanguage.token.Token;
 import expressionLanguage.token.TokenStream;
 import expressionLanguage.token.Type;
 import expressionLanguage.token.parser.TokenParser;
+import expressionLanguage.token.parser.TokenStreamParser;
 
 public class ForTokenParser implements TokenParser {
 
     @Override
-    public Node parse(Token token, Parser parser) throws Exception {
+    public Node parse(Token token, TokenStreamParser parser) {
         TokenStream stream = parser.getStream();
         Position position = token.getPosition();
 
@@ -31,15 +32,15 @@ public class ForTokenParser implements TokenParser {
 
         stream.expect(Type.EXECUTE_END);
 
-        BodyNode body = parser.subparse((Token subToken) -> subToken.test(Type.NAME, "else", "endfor"));
+        BodyNode body = parser.subparse((Token subToken) -> subToken.isA(Type.NAME, "else", "endfor"));
 
         BodyNode elseBody = null;
 
-        if (stream.current().test(Type.NAME, "else")) {
+        if (stream.current().isA(Type.NAME, "else")) {
             // skip the 'else' token
             stream.next();
             stream.expect(Type.EXECUTE_END);
-            elseBody = parser.subparse((Token subToken) -> subToken.test(Type.NAME, "endfor"));
+            elseBody = parser.subparse((Token subToken) -> subToken.isA(Type.NAME, "endfor"));
         }
 
         // skip the 'endfor' token

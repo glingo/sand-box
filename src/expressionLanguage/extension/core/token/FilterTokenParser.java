@@ -7,11 +7,12 @@ import expressionLanguage.model.position.Position;
 import expressionLanguage.model.tree.BodyNode;
 import expressionLanguage.model.tree.Node;
 import expressionLanguage.model.tree.PrintNode;
-import expressionLanguage.parser.Parser;
+import expressionLanguage.token.parser.Parser;
 import expressionLanguage.token.Token;
 import expressionLanguage.token.TokenStream;
 import expressionLanguage.token.Type;
 import expressionLanguage.token.parser.TokenParser;
+import expressionLanguage.token.parser.TokenStreamParser;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ import java.util.List;
 public class FilterTokenParser implements TokenParser {
 
     @Override
-    public Node parse(Token token, Parser parser) throws Exception {
+    public Node parse(Token token, TokenStreamParser parser) {
         TokenStream stream = parser.getStream();
         Position position = token.getPosition();
 
@@ -33,7 +34,7 @@ public class FilterTokenParser implements TokenParser {
 
         filterInvocationExpressions.add(parser.getExpressionParser().parseFilterInvocationExpression());
 
-        while(stream.current().test(Type.OPERATOR, "|")){
+        while(stream.current().isA(Type.OPERATOR, "|")){
             // skip the '|' token
             stream.next();
             filterInvocationExpressions.add(parser.getExpressionParser().parseFilterInvocationExpression());
@@ -41,7 +42,7 @@ public class FilterTokenParser implements TokenParser {
 
         stream.expect(Type.EXECUTE_END);
 
-        BodyNode body = parser.subparse((Token subToken) -> subToken.test(Type.NAME, "endfilter"));
+        BodyNode body = parser.subparse((Token subToken) -> subToken.isA(Type.NAME, "endfilter"));
 
         stream.next();
         stream.expect(Type.EXECUTE_END);

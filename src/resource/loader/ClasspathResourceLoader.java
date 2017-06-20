@@ -5,12 +5,17 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import resource.exceptions.ResourceNotFoundException;
+import utils.ClassUtils;
 
 public class ClasspathResourceLoader implements ResourceLoader {
     
     public static final String ROOT_PATH = "/";
     private final ClassLoader classLoader;
 
+    public ClasspathResourceLoader() {
+        this(ClassUtils.getDefaultClassLoader());
+    }
+    
     public ClasspathResourceLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
@@ -31,7 +36,8 @@ public class ClasspathResourceLoader implements ResourceLoader {
 
     @Override
     public boolean exists(String path) {
-        URL result = classLoader.getResource(getPath(path));
+//        URL result = classLoader.getResource(getPath(path));
+        InputStream result = classLoader.getResourceAsStream(getPath(path));
         return result != null;
     }
 

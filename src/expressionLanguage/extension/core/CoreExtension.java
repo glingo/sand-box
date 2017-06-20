@@ -1,13 +1,19 @@
 package expressionLanguage.extension.core;
 
+import expressionLanguage.extension.core.test.IterableTest;
+import expressionLanguage.extension.core.function.RangeFunction;
+import expressionLanguage.extension.core.function.MinFunction;
+import expressionLanguage.extension.core.function.MaxFunction;
 import expressionLanguage.extension.Extension;
 import expressionLanguage.extension.core.expression.*;
 import expressionLanguage.extension.core.filter.*;
 import expressionLanguage.extension.core.token.*;
 import expressionLanguage.filter.Filter;
 import expressionLanguage.function.Function;
+import expressionLanguage.model.visitor.NodeVisitor;
 import expressionLanguage.operator.Associativity;
 import expressionLanguage.operator.BinaryOperator;
+import expressionLanguage.operator.Operator;
 import expressionLanguage.operator.UnaryOperator;
 import expressionLanguage.test.Test;
 import expressionLanguage.token.parser.TokenParser;
@@ -15,11 +21,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CoreExtension implements Extension {
 
     @Override
-    public List<TokenParser> getTokenParsers() {
+    public Map<String, TokenParser> getTokenParsers() {
         ArrayList<TokenParser> parsers = new ArrayList<>();
         parsers.add(new BlockTokenParser());
         parsers.add(new ExtendsTokenParser());
@@ -32,42 +39,52 @@ public class CoreExtension implements Extension {
         parsers.add(new MacroTokenParser());
         parsers.add(new ParallelTokenParser());
         parsers.add(new SetTokenParser());
-        return parsers;
+        return parsers.stream().collect(Collectors.toMap(TokenParser::getTag, a -> a));
     }
 
-    @Override
-    public List<UnaryOperator> getUnaryOperators() {
-        ArrayList<UnaryOperator> operators = new ArrayList<>();
-        operators.add(new UnaryOperator("not", 5, UnaryNotExpression.class));
-        operators.add(new UnaryOperator("+", 500, UnaryPlusExpression.class));
-        operators.add(new UnaryOperator("-", 500, UnaryMinusExpression.class));
+//    @Override
+    public Map<String, UnaryOperator> getUnaryOperators() {
+        Map<String, UnaryOperator> operators = new HashMap<>();
+        operators.put("not", new UnaryOperator(5, UnaryNotExpression.class));
+        operators.put("+", new UnaryOperator(500, UnaryPlusExpression.class));
+        operators.put("-", new UnaryOperator(500, UnaryMinusExpression.class));
         return operators;
     }
 
-    @Override
-    public List<BinaryOperator> getBinaryOperators() {
-        ArrayList<BinaryOperator> operators = new ArrayList<>();
-        operators.add(new BinaryOperator("or", 10, OrExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("and", 15, AndExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("is", 20, PositiveTestExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("is not", 20, NegativeTestExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("contains", 20, ContainsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("==", 30, EqualsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("equals", 30, EqualsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("!=", 30, NotEqualsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator(">", 30, GreaterThanExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("<", 30, LessThanExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator(">=", 30, GreaterThanEqualsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("<=", 30, LessThanEqualsExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("+", 40, AddExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("-", 40, SubtractExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("*", 60, MultiplyExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("/", 60, DivideExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("%", 60, ModulusExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("|", 100, FilterExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("~", 110, ConcatenateExpression.class, Associativity.LEFT));
-        operators.add(new BinaryOperator("..", 120, RangeExpression.class, Associativity.LEFT));
+//    @Override
+    public Map<String, BinaryOperator> getBinaryOperators() {
+        Map<String, BinaryOperator> operators = new HashMap<>();
+        operators.put("or", new BinaryOperator(10, OrExpression.class, Associativity.LEFT));
+        operators.put("and", new BinaryOperator(15, AndExpression.class, Associativity.LEFT));
+        operators.put("is", new BinaryOperator(20, PositiveTestExpression.class, Associativity.LEFT));
+        operators.put("is not", new BinaryOperator(20, NegativeTestExpression.class, Associativity.LEFT));
+        operators.put("contains", new BinaryOperator(20, ContainsExpression.class, Associativity.LEFT));
+        operators.put("==", new BinaryOperator(30, EqualsExpression.class, Associativity.LEFT));
+        operators.put("equals", new BinaryOperator(30, EqualsExpression.class, Associativity.LEFT));
+        operators.put("!=", new BinaryOperator(30, NotEqualsExpression.class, Associativity.LEFT));
+        operators.put(">", new BinaryOperator(30, GreaterThanExpression.class, Associativity.LEFT));
+        operators.put("<", new BinaryOperator(30, LessThanExpression.class, Associativity.LEFT));
+        operators.put(">=", new BinaryOperator(30, GreaterThanEqualsExpression.class, Associativity.LEFT));
+        operators.put("<=", new BinaryOperator(30, LessThanEqualsExpression.class, Associativity.LEFT));
+        operators.put("+", new BinaryOperator(40, AddExpression.class, Associativity.LEFT));
+        operators.put("-", new BinaryOperator(40, SubtractExpression.class, Associativity.LEFT));
+        operators.put("*", new BinaryOperator(60, MultiplyExpression.class, Associativity.LEFT));
+        operators.put("/", new BinaryOperator(60, DivideExpression.class, Associativity.LEFT));
+        operators.put("%", new BinaryOperator(60, ModulusExpression.class, Associativity.LEFT));
+        operators.put("|", new BinaryOperator(100, FilterExpression.class, Associativity.LEFT));
+        operators.put("~", new BinaryOperator(110, ConcatenateExpression.class, Associativity.LEFT));
+        operators.put("..", new BinaryOperator(120, RangeExpression.class, Associativity.LEFT));
 
+        return operators;
+    }
+    
+    @Override
+    public Map<String, Operator> getOperators() {
+        Map<String, Operator> operators = new HashMap<>();
+        
+        operators.putAll(getUnaryOperators());
+        operators.putAll(getBinaryOperators());
+        
         return operators;
     }
 
@@ -126,11 +143,13 @@ public class CoreExtension implements Extension {
         return functions;
     }
 
-//    @Override
-//    public List<NodeVisitorFactory> getNodeVisitors() {
-//        List<NodeVisitorFactory> visitors = new ArrayList<>();
-//        visitors.add(new MacroAndBlockRegistrantNodeVisitorFactory());
-//        return visitors;
-//    }
+    @Override
+    public List<NodeVisitor> getVisitors() {
+        List<NodeVisitor> visitors = new ArrayList<>();
+        visitors.add((node) -> {
+            System.out.println(node);
+        });
+        return visitors;
+    }
 
 }

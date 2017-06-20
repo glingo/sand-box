@@ -12,7 +12,7 @@ public class FileSystem {
     private final File baseDirectory;
 
     public FileSystem() {
-        this.baseDirectory = new File("");
+        this.baseDirectory = new File(ROOT_PATH);
     }
     
     public FileSystem(File baseDirectory) {

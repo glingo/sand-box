@@ -2,10 +2,6 @@ package expressionLanguage.model.tree;
 
 import expressionLanguage.expression.Expression;
 import expressionLanguage.model.position.Position;
-import templating.EvaluationContext;
-import templating.template.Template;
-import templating.extension.NodeVisitor;
-import java.io.Writer;
 
 public class ImportNode extends Node {
 

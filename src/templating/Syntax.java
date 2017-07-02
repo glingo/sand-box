@@ -3,11 +3,14 @@ package templating;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import utils.StringUtils;
 
 public class Syntax {
+    
+    private final String EXPRESSION_PATTERN = "(?<name>%s+)(?<expression>.*)";
+    private final String COMMAND_PATTERN = "(?<start>%s+)(?<expression>.*)";
+    
+    private Map<String, Command> commands;
+    private Map<String, Expression> expressions;
     
     private String wsTrim;
     
@@ -76,6 +79,14 @@ public class Syntax {
         this.wsTrim = wsTrim;
     }
     
+    public Map<String, Expression> getExpressions() {
+        return expressions;
+    }
+
+    public void setExpressions(Map<String, Expression> expressions) {
+        this.expressions = expressions;
+    }
+    
 //    private Map<String, Pattern> commands;
 //    private Map<String, Pattern> expressions;
 //    
@@ -125,16 +136,20 @@ public class Syntax {
     }
 
     public static class SyntaxBuilder {
-        private String wsTrim;
         
-        private String commentOpen;
-        private String commentClose;
+        private Map<String, Command> commands = new HashMap<>();
+        private Map<String, Expression> expressions = new HashMap<>();
+        
+        private String wsTrim = "-";
+        
+        private String commentOpen = "{#";
+        private String commentClose = "#}";
 
-        private String executeOpen;
-        private String executeClose;
+        private String executeOpen = "{%";
+        private String executeClose = "%}";
 
-        private String printOpen;
-        private String printClose;
+        private String printOpen = "{{";
+        private String printClose = "}}";
         
         public SyntaxBuilder trim(String wsTrim) {
             this.wsTrim = wsTrim;
@@ -159,8 +174,42 @@ public class Syntax {
             return this;
         }
         
+        public SyntaxBuilder binary(String name, String[] operators, BiConsumer<String, Context> consumer) {
+            Expression expression = new BinaryExpression(name, operators, consumer);
+            expressions.put(name, expression);
+            return this;
+        }
+        
+        public SyntaxBuilder expression(String name, BiConsumer<String, Context> consumer) {
+            Expression expression = new Expression(name, consumer);
+            expressions.put(name, expression);
+            return this;
+        }
+
+//        // while .
+//        // if .
+//        // not .
+//        // is .
+//        // for . in .
+//        private String buildPattern(String name, String operator) {
+//            String base = //"^"
+//                    ""
+//                    .concat("(?<name>").concat(Pattern.quote(name)).concat("+)")
+//                    .concat("(?<expression>.*?)");
+//
+//            if (StringUtils.hasText(operator)) {
+//                base = base
+//                        .concat("(?<operator>").concat(Pattern.quote(operator)).concat("+)")
+//                        .concat("(?<nested>.*)");
+//            }
+//
+//            return base;
+//        }
+        
         public Syntax build() {
             Syntax syntax = new Syntax();
+            
+            syntax.setExpressions(expressions);
             
             syntax.setWsTrim(wsTrim);
             

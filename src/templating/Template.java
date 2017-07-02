@@ -1,9 +1,7 @@
 package templating;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Template {
     
@@ -14,6 +12,10 @@ public class Template {
     private List<Template> imports;
     
     private List<Token> tokens;
+    
+    public TokenStream stream() {
+        return new TokenStream(tokens, name);
+    }
     
     public String getName() {
         return name;
@@ -46,10 +48,10 @@ public class Template {
     public void setTokens(List<Token> tokens) {
         this.tokens = tokens;
     }
-    
+
     @Override
     public String toString() {
-        return "Template{" + "name=" + name + ", extend=" + extend + ", imports=" + imports + '}';
+        return "Template{" + "name=" + name + ", extend=" + extend + ", imports=" + imports + ", tokens=" + tokens + '}';
     }
     
     public static TemplateBuilder builder() {

@@ -1,7 +1,6 @@
 package templating;
 
 import java.util.Objects;
-import java.util.regex.Matcher;
 
 public class Token {
     

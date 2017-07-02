@@ -1,8 +1,14 @@
 package templating;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
-import java.util.regex.Matcher;
+import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
+import static java.util.regex.Pattern.compile;
 import resource.ResourceService;
 import resource.loader.ClasspathResourceLoader;
 import resource.loader.FileResourceLoader;
@@ -11,50 +17,192 @@ import resource.loader.StringResourceLoader;
 import resource.reference.ResourceReference;
 
 public class TemplatingDemo {
+    private static final Pattern PATTERN_STRING = compile("((\").*?(?<!\\\\)(\"))|((').*?(?<!\\\\)('))", Pattern.DOTALL);
     
-    public static void main(String[] args) {
-        
-        Rule executeStart = Rule.expect("(?<start>\\Q{%\\E)");
-        Rule executeEnd = Rule.expect("(?<end>\\Q%}\\E)");
-        
-        Rule expression = Rule.expect("(?<var>.*)");
-        Rule ltrim = Rule.expect("(?<ltrim>\\Q-\\E?+)");
-        Rule rtrim = Rule.expect("(?<rtrim>\\Q-\\E?+)");
-        
-//        Rule execute = Rule.expect("(?<start>\\Q{%\\E)(?<ltrim>\\Q-\\E*)(?<expression>.*)(?<rtrim>\\Q-\\E*)(?<end>\\Q%}\\E)");
-        
-        Sequence command = Sequence.builder()
-                .withRule(executeStart)
-                .withRule(ltrim)
-                .withRule(expression)
-                .withRule(rtrim)
-                .withRule(executeEnd)
+    public static void main(String[] args) throws Exception {
+        ResourceService resourceService = ResourceService.builder()
+                .with(ResourceReference.FILE, FileResourceLoader.instance())
+                .with(ResourceReference.FILE, FileResourceLoader.instance(new File("/Users/florian/Documents/sources/sand-box/demo")))
+                .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(ClassLoader.getSystemClassLoader()))
+                .with(ResourceReference.MEMORY, InMemoryResourceLoader.builder()
+                        .withResource("test", "Demo in memory String")
+                        .build())
+                .with(ResourceReference.STRING, new StringResourceLoader())
+                .with(ResourceReference.ANY_TYPE, new StringResourceLoader())
+                .build();
+
+        Syntax syntax = Syntax.builder()
+                .expression("if", (String value, Context context) -> {
+                    Optional<Boolean> result = context.evaluate(value, Boolean.class);
+                    if (result.isPresent() && result.get()) {
+                        System.out.println(result.get());
+                    }
+                })
+                .binary("for", new String[]{"in"}, (String value, Context context) -> {
+                    String[] values = value.split("in");
+                    
+                    if (values.length < 2) {
+                        throw new IllegalArgumentException("'for' should be followed by an itteration exression('a in b')");
+                    }
+                    
+//                    Token next = context.getStream().next();
+                    
+                    String key = values[0].trim();
+                    String v = values[1].trim();
+                    
+                    // is form : ["", "", "", "", ""] ?
+                    // is form : {a : "", b : ""} ?
+                    
+                    // is a var : a ?
+                    Optional<Object> evaluated = context.evaluate(v, Object.class);
+                    
+                    if (!evaluated.isPresent()) {
+                        return;
+                    }
+                    
+                    Collection list = new ArrayList();
+                    Object o = evaluated.get();
+                    
+                    if (o instanceof Collection) {
+                        list = (Collection) o;
+                    }
+                    
+                    if (o instanceof String) {
+                        char[] chars = ((String) o).toCharArray();
+                        for(char c : chars) {
+                            list.add(c);
+                        }
+                    }
+                    
+                    int i = 0;
+                    for (Object object : list) {
+                        context.getModel().put("index", i++);
+                        context.getModel().put(key, object);
+                        System.out.println(object);
+                    }
+                })
+                .binary("set", new String[]{"="}, (String value, Context context) -> {
+                    String[] values = value.split("=");
+                    
+                    if (values.length < 2) {
+                        throw new IllegalArgumentException("'set' should be followed by a attribution exression('a = b')");
+                    }
+                    
+                    String key = values[0].trim();
+                    String v = values[1].trim().replaceAll("(\\Q\"\\E)", "");
+                    
+                    context.getModel().put(key, v);
+                })
                 .build();
         
-        System.out.println(command.validate("{% if true %}"));
-        System.out.println(command.groups("{% if true %}"));
-        System.out.println(command.groups("{%- if true %}"));
-        System.out.println(command.groups("{% %}"));
-        System.out.println(command.groups("aze"));
-        System.out.println(command.groups("aze"));
-        System.out.println(command.validate("{# this is a comment #}"));
+        Environment env = Environment.builder()
+                .resourceService(resourceService)
+                .syntax(syntax)
+                .build();
+
+        Engine engine = Engine.builder()
+                .environment(env)
+                .build();
+
+        Template demo = engine.load("templating/demo.view");     
+        engine.render(demo, new StreamRenderer());  
+                
+//        engine.render(demo, Renderer.debug());
+//        engine.render(demo, (t, e) -> {
+//            t.getTokens().forEach(System.out::println);
+//            System.out.println(t);
+//        });             
         
+        Template template = Template.builder().named("first")
+                .build();
         
-//        ResourceService resourceService = ResourceService.builder()
-//                .with(ResourceReference.FILE, FileResourceLoader.instance())
-//                .with(ResourceReference.FILE, FileResourceLoader.instance(new File("/Users/florian/Documents/sources/sand-box/demo")))
-//                .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(ClassLoader.getSystemClassLoader()))
-//                .with(ResourceReference.MEMORY, InMemoryResourceLoader.builder()
-//                        .withResource("test", "Demo in memory String")
-//                        .build())
-//                .with(ResourceReference.STRING, new StringResourceLoader())
-//                .with(ResourceReference.ANY_TYPE, new StringResourceLoader())
+        Template home = Template.builder().named("home")
+                .extend(template)
+                .build();
+    }
+    
+    public static class StreamRenderer implements Renderer {
+        
+        @Override
+        public void render(Template template, Environment environment) throws Exception {
+            Context context = new Context();
+            Writer writer = new OutputStreamWriter(System.out);
+            
+            TokenStream stream = template.stream();
+            Token token = stream.current();
+            
+            while (!Token.isEOF(token)) {
+                switch (token.getType()) {
+                    case "comment_open":
+                        token = stream.expect("comment_open");
+                        token = stream.expect("expression");
+                        token = stream.expect("comment_close");                        
+                        break;
+                    case "evaluate_open":
+                        token = stream.expect("evaluate_open");
+                        token = stream.expect("expression");
+                        token = stream.expect("evaluate_close");     
+//                        token = stream.next();
+//                        Optional<Object> evaluated = context.evaluate(token.getValue(), Object.class);
+//                        if (evaluated.isPresent()) {
+//                            writer.write(evaluated.get().toString());
+//                        }
+                        break;
+                    case "execute_open":
+//                        token = stream.expect("expression");
+                        // evaluate the expression
+//                        environment.getSyntax().getExpressions().values().forEach((e) -> {
+//                            e.evalute(token.getValue().trim(), context);
+//                        });
+                        break;
+                    case "text":
+                        writer.write(token.getValue());
+                        break;
+                    default:
+                        break;
+                }
+                token = stream.next();
+            }
+            
+            writer.flush();
+        }
+    }
+    
+    public static class ForExpression extends BinaryExpression {
+        
+        public ForExpression(String name, String[] operators, BiConsumer consumer) {
+            super(name, operators, consumer);
+        }
+        
+    }
+}
+
+//        Rule executeStart = Rule.group("start", Pattern.quote("{%"));
+//        Rule executeEnd = Rule.group("end", Pattern.quote("%}"));
+//        
+//        Rule expression = Rule.group("var", ".*");
+//        Rule ltrim = Rule.group("ltrim", "-", "?+");
+//        Rule rtrim = Rule.group("rtrim", "-", "?+");
+//        
+////        Rule execute = Rule.expect("(?<start>\\Q{%\\E)(?<ltrim>\\Q-\\E*)(?<expression>.*)(?<rtrim>\\Q-\\E*)(?<end>\\Q%}\\E)");
+//        
+//        Sequence command = Sequence.builder()
+//                .withRule(executeStart)
+//                .withRule(ltrim)
+//                .withRule(expression)
+//                .withRule(rtrim)
+//                .withRule(executeEnd)
 //                .build();
 //        
-//        Environment env = Environment.builder()
-//                .resourceService(resourceService)
-//                .build();
-//        
+//        System.out.println(command.validate("{% if true %}\nbonjour\n{% endif %}"));
+//        System.out.println(command.groups("{% if true %} bonjour {% endif %}"));
+//        System.out.println(command.groups("{%- if true %}\nbonjour\n{% endif %}"));
+//        System.out.println(command.groups("{% %} {% %}"));
+//        System.out.println(command.groups("aze"));
+//        System.out.println(command.groups("aze"));
+//        System.out.println(command.validate("{# this is a comment #}"));
+        
+
 //        Syntax syntax = Syntax.builder()
 //                .trim("-")
 //                .command("comment", "{#", "#}", (stream, context) -> {})
@@ -89,26 +237,3 @@ public class TemplatingDemo {
 //                })
 //                .build();
 //        
-//        Tokenizer tokenizer = Tokenizer.builder()
-//                .syntax(syntax)
-//                .build();
-//        
-//        Engine engine = Engine.builder()
-//                .environment(env)
-//                .tokenizer(tokenizer)
-//                .build();
-//        
-//        Template demo = engine.load("templating/demo.view");
-//        
-//        Template template = Template.builder().named("first")
-//                .build();
-//        
-//        Template home = Template.builder().named("home")
-//                .extend(template)
-//                .build();
-//        
-//        engine.render(home, (t, e) -> {
-//            System.out.println(t);
-//        });
-    }
-}

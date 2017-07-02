@@ -5,12 +5,14 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import resource.ResourceService;
 
 public class Environment {
     
     private Syntax syntax;
+    private Tokenizer tokenizer;
     
     private ResourceService resourceService;
     
@@ -45,6 +47,15 @@ public class Environment {
 
     public Syntax getSyntax() {
         return syntax;
+    }
+
+    public void setTokenizer(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+    }
+    
+    
+    public Tokenizer getTokenizer() {
+        return tokenizer;
     }
     
     public void setSources(List<Source> sources) {
@@ -83,6 +94,8 @@ public class Environment {
             Environment env = new Environment();
             
             env.setResourceService(resourceService);
+            env.setSyntax(syntax);
+            env.setTokenizer(Tokenizer.builder().withSyntax(syntax).build());
             
             return env;
         }

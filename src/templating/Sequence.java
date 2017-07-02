@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import utils.StringUtils;
 
 public class Sequence {
     
@@ -28,23 +27,72 @@ public class Sequence {
     }
     
     public List<String> groups(String value) {
-        List<String> result = new ArrayList<>();
+        List<String> results = new ArrayList<>();
         
         if (Objects.isNull(this.rules)) {
-            return result;
-        } 
-            
+            return results;
+        }
+        
+//        this.rules.stream().map((rule) -> rule.extract(value))
+//                .peek(System.out::println);
+
+        List<String> names = new ArrayList<>();
+        this.rules.stream().map(Rule::getName).forEach(names::add);
+        
+        for (Rule rule : this.rules) {
+            System.out.print("value : ");
+            System.out.println(value);
+            String extracted = rule.extract(value);
+            if (StringUtils.hasText(extracted)) {
+                value = value.replaceFirst(Pattern.quote(extracted), "");
+            }
+            System.out.print("Result : ");
+            System.out.println(extracted);
+        }
         Pattern compiled = Pattern.compile(this.rules.stream()
+            .peek((rule) -> names.add(rule.getName()))
             .map((rule) -> rule.getIntern().pattern())
             .collect(Collectors.joining()));
         
+        System.out.print("Pattern : ");
         System.out.println(compiled.pattern());
+//        
+//        Matcher matcher = compiled.matcher(value);
         
-        Matcher matcher = compiled.matcher(value);
-        while(matcher.find()) {
-            result.add(matcher.group());
-        }
-        return result;
+//        if(!matcher.find()) {
+//            return result;
+//        }
+//        int count = matcher.groupCount();
+        
+//        System.out.print("Count : ");
+//        System.out.println(count);
+//        
+//        System.out.print("Name Count : ");
+//        System.out.println(names.size());
+//        
+//        names.stream().forEach((name) -> {
+//            System.out.print(name);
+//            System.out.print(" : ");
+//            System.out.println(matcher.group(name));
+//            
+//            result.add(matcher.group(name));
+//        });
+//        
+//        System.out.print("Result : ");
+//        System.out.println(result);
+        
+//        for (int i = 0; i < count; i++) {
+//            result.add(matcher.group(i));
+//            System.out.print("Result : ");
+//            System.out.println(result);
+//        }
+        
+//        while(matcher.find()) {
+//            result.add(matcher.group());
+//            System.out.print("Result : ");
+//            System.out.println(result);
+//        }
+        return results;
     }
     
     public boolean validate(String value) {

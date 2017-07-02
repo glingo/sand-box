@@ -1,7 +1,5 @@
 package templating;
 
-import expressionLanguage.model.position.*;
-
 public class Position {
     
     private final String name;

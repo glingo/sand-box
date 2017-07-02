@@ -2,6 +2,7 @@ package converter;
 
 import java.util.Arrays;
 import converter.support.*;
+import java.util.Optional;
 
 public class ConverterResolver {
 
@@ -28,14 +29,21 @@ public class ConverterResolver {
     
     public boolean support(Object toConvert) {
         return Arrays.stream(this.converters).anyMatch((Converter converter)->{
-            return Arrays.asList(converter.getTypes()).contains(toConvert);
+            return converter.getTypes().contains(toConvert);
         });
     }
     
     public Converter resolve(Object toConvert) {
-        return Arrays.stream(this.converters).filter((Converter converter)->{
-            return Arrays.asList(converter.getTypes()).contains(toConvert);
-        }).findFirst().get();
+        Optional<Converter> converter = Arrays.stream(this.converters)
+                .filter((Converter c) -> {
+            return c.getTypes().contains(toConvert);
+        }).findFirst();
+        
+        if (!converter.isPresent()) {
+            return null;
+        }
+        
+        return converter.get();
     }
     
 }

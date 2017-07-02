@@ -1,9 +1,4 @@
-
-
-
-
 {# comment #}
-
 {% set name = "World" %}
 
 Some text, to say hello ...
@@ -15,6 +10,17 @@ Hello {{ name }} !
     This is true !
 {% endif %} 
 
+
+{% if false %}
+    This is not true !
+{% endif %} 
+
 {% for letter in name %}
     {{ letter }} ... 
+{% endfor %} 
+
+{% for i in tab %}
+    {% if i > 0 %}
+        Greater than 0
+    {% endif %}
 {% endfor %} 

@@ -2,11 +2,11 @@ package templating;
 
 import com.marvin.component.util.StringUtils;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static java.util.regex.Pattern.compile;
+import static java.util.regex.Pattern.quote;
 
 public class Tokenizer {
     
@@ -15,13 +15,12 @@ public class Tokenizer {
     private Pattern startPattern;
     
     public List<Token> tokenize(Source source) {
-        TokenSequence root = new TokenSequence();
-        
         List<Token> tokens = new ArrayList<>();
  
         while(source.length() > 0) {
             String text;
-            Matcher startMatcher = this.syntax.getStartPattern().matcher(source);
+//            source.advanceThroughWhitespace();
+            Matcher startMatcher = this.startPattern.matcher(source);
 
             if (!startMatcher.find()) {
                 // nothing to execute.
@@ -35,30 +34,10 @@ public class Tokenizer {
             }
             
             source.advance(text.length());
-
-            this.syntax.getCommands().forEach((name, pattern) -> {
-                source.advanceThroughWhitespace();
-                Matcher matcher = pattern.matcher(source);
-                if (matcher.find()) {
-                    String start = matcher.group("start");
-                    String ltrim = matcher.group("ltrim");
-                    String value = StringUtils.trimWhitespace(matcher.group("value"));
-                    String rtrim = matcher.group("rtrim");
-                    String end = matcher.group("end");
-                    if (StringUtils.hasText(ltrim)) {
-                        value = StringUtils.trimLeadingWhitespace(value);
-                    }
-                    if (StringUtils.hasText(rtrim)) {
-                        value = StringUtils.trimTrailingWhitespace(value);
-                    }
-                    
-//                    tokens.add(new Token(name.concat("_start"), start, source.getPosition()));
-//                    tokens.add(new Token("expression", value, source.getPosition()));
-//                    tokens.add(new Token(name.concat("_end"), end, source.getPosition()));
-                    
-                    tokens.add(new Token(name, value, source.getPosition()));
-                    source.advance(matcher.end());
-                }
+            
+            this.tokenParsers.stream().forEach((parser) -> {
+//                source.advanceThroughWhitespace();
+                parser.parse(source, tokens);
             });
         }
         
@@ -82,6 +61,14 @@ public class Tokenizer {
     public void setTokenParsers(List<TokenParser> tokenParsers) {
         this.tokenParsers = tokenParsers;
     }
+
+    public Pattern getStartPattern() {
+        return startPattern;
+    }
+
+    public void setStartPattern(Pattern startPattern) {
+        this.startPattern = startPattern;
+    }
     
     public static TokenizerBuilder builder() {
         return new TokenizerBuilder();
@@ -89,6 +76,7 @@ public class Tokenizer {
     
     public static class TokenizerBuilder {
         
+        private Pattern startPattern;
         private List<TokenParser> tokenParsers = new ArrayList<>();
         
         public TokenizerBuilder withParser(TokenParser parser) {
@@ -96,9 +84,23 @@ public class Tokenizer {
             return this;
         }
         
+        public TokenizerBuilder withSyntax(Syntax syntax) {
+            
+            this.startPattern = compile(quote(syntax.getPrintOpen()) + "|" + 
+                    quote(syntax.getExecuteOpen()) + "|" + 
+                    quote(syntax.getCommentOpen()));
+            
+            withParser(TokenParser.group("evaluate", syntax.getPrintOpen(), syntax.getPrintClose()));
+            withParser(TokenParser.group("execute", syntax.getExecuteOpen(), syntax.getExecuteClose()));
+            withParser(TokenParser.group("comment", syntax.getCommentOpen(), syntax.getCommentClose()));
+            
+            return this;
+        }
+        
         public Tokenizer build() {
             Tokenizer tokenizer = new Tokenizer();
             
+            tokenizer.setStartPattern(startPattern);
             tokenizer.setTokenParsers(tokenParsers);
             
             return tokenizer;

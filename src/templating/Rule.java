@@ -1,17 +1,17 @@
 package templating;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Rule {
     
+    private String name;
     private Pattern intern;
     private Predicate<Matcher> validate;
 
-    public Rule(Pattern intern, Predicate<Matcher> validate) {
+    public Rule(String name, Pattern intern, Predicate<Matcher> validate) {
+        this.name = name;
         this.intern = intern;
         this.validate = validate;
     }
@@ -24,6 +24,14 @@ public class Rule {
         return this.intern.matcher(value);
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
     public Pattern getIntern() {
         return intern;
     }
@@ -40,8 +48,22 @@ public class Rule {
         this.validate = validate;
     }
     
-    public static Rule expect(String value) {
-        return new Rule(Pattern.compile(value), (matcher) -> {
+    public String extract(String from) {
+        Matcher matcher = match(from);
+        if (!matcher.find()) {
+            return "";
+        }
+        return matcher.group(name);
+    }
+    
+    public static Rule group(String name, String value) {
+        return group(name, value, "");
+    }
+    
+    public static Rule group(String name, String value, String quantity) {
+        String pattern = "(?<".concat(name).concat(">")
+                .concat(value).concat(quantity).concat(")");
+        return new Rule(name, Pattern.compile(pattern), (matcher) -> {
             return matcher.find();
         });
     }

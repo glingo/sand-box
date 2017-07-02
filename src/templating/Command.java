@@ -1,14 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package templating;
 
-/**
- *
- * @author florian
- */
+import java.util.regex.Pattern;
+
 public class Command {
     
+//    private static final String COMMAND_PATTERN = "(?<open>%s+)(?<expression>.*)(?<close>%s+)";
+    
+    private String name;
+    private String open;
+    private String close;
+
+    public Command(String name, String open, String close) {
+        this.name = name;
+        this.open = open;
+        this.close = close;
+    }
 }

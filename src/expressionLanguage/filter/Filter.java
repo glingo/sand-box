@@ -1,9 +1,8 @@
 package expressionLanguage.filter;
 
-import expressionLanguage.function.Function;
 import java.util.Map;
 
-public interface Filter extends NamedArguments {
+public interface Filter {
     
     Object apply(Object input, Map<String, Object> args);
 }

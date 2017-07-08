@@ -19,7 +19,7 @@ public class JoinFilter implements Filter {
         argumentNames.add("separator");
     }
 
-    @Override
+//    @Override
     public List<String> getArgumentNames() {
         return argumentNames;
     }

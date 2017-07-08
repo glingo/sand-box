@@ -4,6 +4,7 @@ import expressionLanguage.EvaluationContext;
 import expressionLanguage.expression.BinaryExpression;
 import expressionLanguage.filter.Filter;
 import expressionLanguage.model.tree.ArgumentsNode;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,7 +35,8 @@ public class FilterExpression extends BinaryExpression<Object> {
             throw new IllegalStateException(msg);
         }
 
-        Map<String, Object> namedArguments = args.getArgumentMap(context, filter);
+//        Map<String, Object> namedArguments = args.getArgumentMap(context, filter);
+        Map<String, Object> namedArguments = new HashMap<>();
 
         Object input = getLeftExpression().evaluate(context);
 

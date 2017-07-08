@@ -17,12 +17,12 @@ public interface Renderer {
             while (!Token.isEOF(token)) {
                 String value = token.getValue();
                 switch (token.getType()) {
-                    case "comment":
+                    case "comment_open":
                         System.out.println("comment(" + value + ")");
                         token = stream.next();
                         break;
-                    case "evaluate":
-                        System.out.print("evaluate(" + value + "): ");
+                    case "print_open":
+                        System.out.print("print(" + value + "): ");
                         Optional<Object> evaluated = context.evaluate(value, Object.class);
                         if (evaluated.isPresent()) {
                             System.out.print(evaluated.get());

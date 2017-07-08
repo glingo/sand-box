@@ -17,7 +17,7 @@ public class MergeFilter implements Filter {
         argumentNames.add("items");
     }
 
-    @Override
+//    @Override
     public List<String> getArgumentNames() {
         return argumentNames;
     }

@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class CapitalizeFilter implements Filter {
 
-    @Override
+//    @Override
     public List<String> getArgumentNames() {
         return null;
     }

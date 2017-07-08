@@ -19,7 +19,7 @@ public class ReplaceFilter implements Filter {
 
     private final static List<String> ARGS = Collections.unmodifiableList(Arrays.asList(ARGUMENT_NAME));
 
-    @Override
+//    @Override
     public List<String> getArgumentNames() {
         return ARGS;
     }

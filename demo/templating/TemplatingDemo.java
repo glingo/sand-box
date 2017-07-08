@@ -24,76 +24,9 @@ public class TemplatingDemo {
                 .with(ResourceReference.FILE, FileResourceLoader.instance())
                 .with(ResourceReference.FILE, FileResourceLoader.instance(new File("/Users/florian/Documents/sources/sand-box/demo")))
                 .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(ClassLoader.getSystemClassLoader()))
-                .with(ResourceReference.MEMORY, InMemoryResourceLoader.builder()
-                        .withResource("test", "Demo in memory String")
-                        .build())
-                .with(ResourceReference.STRING, new StringResourceLoader())
-                .with(ResourceReference.ANY_TYPE, new StringResourceLoader())
                 .build();
 
-        Syntax syntax = Syntax.builder()
-                .expression("if", (String value, Context context) -> {
-                    Optional<Boolean> result = context.evaluate(value, Boolean.class);
-                    if (result.isPresent() && result.get()) {
-                        System.out.println(result.get());
-                    }
-                })
-                .binary("for", new String[]{"in"}, (String value, Context context) -> {
-                    String[] values = value.split("in");
-                    
-                    if (values.length < 2) {
-                        throw new IllegalArgumentException("'for' should be followed by an itteration exression('a in b')");
-                    }
-                    
-//                    Token next = context.getStream().next();
-                    
-                    String key = values[0].trim();
-                    String v = values[1].trim();
-                    
-                    // is form : ["", "", "", "", ""] ?
-                    // is form : {a : "", b : ""} ?
-                    
-                    // is a var : a ?
-                    Optional<Object> evaluated = context.evaluate(v, Object.class);
-                    
-                    if (!evaluated.isPresent()) {
-                        return;
-                    }
-                    
-                    Collection list = new ArrayList();
-                    Object o = evaluated.get();
-                    
-                    if (o instanceof Collection) {
-                        list = (Collection) o;
-                    }
-                    
-                    if (o instanceof String) {
-                        char[] chars = ((String) o).toCharArray();
-                        for(char c : chars) {
-                            list.add(c);
-                        }
-                    }
-                    
-                    int i = 0;
-                    for (Object object : list) {
-                        context.getModel().put("index", i++);
-                        context.getModel().put(key, object);
-                        System.out.println(object);
-                    }
-                })
-                .binary("set", new String[]{"="}, (String value, Context context) -> {
-                    String[] values = value.split("=");
-                    
-                    if (values.length < 2) {
-                        throw new IllegalArgumentException("'set' should be followed by a attribution exression('a = b')");
-                    }
-                    
-                    String key = values[0].trim();
-                    String v = values[1].trim().replaceAll("(\\Q\"\\E)", "");
-                    
-                    context.getModel().put(key, v);
-                })
-                .build();
+        Syntax syntax = Syntax.builder().build();
         
         Environment env = Environment.builder()
                 .resourceService(resourceService)
@@ -104,10 +37,10 @@ public class TemplatingDemo {
                 .environment(env)
                 .build();
 
-        Template demo = engine.load("templating/demo.view");     
+        Template demo = engine.load("templating/demo.view"); 
+        engine.render(demo, Renderer.debug());    
         engine.render(demo, new StreamRenderer());  
                 
-//        engine.render(demo, Renderer.debug());
 //        engine.render(demo, (t, e) -> {
 //            t.getTokens().forEach(System.out::println);
 //            System.out.println(t);
@@ -237,3 +170,68 @@ public class TemplatingDemo {
 //                })
 //                .build();
 //        
+
+
+
+//
+//                .expression("if", (String value, Context context) -> {
+//                    Optional<Boolean> result = context.evaluate(value, Boolean.class);
+//                    if (result.isPresent() && result.get()) {
+//                        System.out.println(result.get());
+//                    }
+//                })
+//                .binary("for", new String[]{"in"}, (String value, Context context) -> {
+//                    String[] values = value.split("in");
+//                    
+//                    if (values.length < 2) {
+//                        throw new IllegalArgumentException("'for' should be followed by an itteration exression('a in b')");
+//                    }
+//                    
+////                    Token next = context.getStream().next();
+//                    
+//                    String key = values[0].trim();
+//                    String v = values[1].trim();
+//                    
+//                    // is form : ["", "", "", "", ""] ?
+//                    // is form : {a : "", b : ""} ?
+//                    
+//                    // is a var : a ?
+//                    Optional<Object> evaluated = context.evaluate(v, Object.class);
+//                    
+//                    if (!evaluated.isPresent()) {
+//                        return;
+//                    }
+//                    
+//                    Collection list = new ArrayList();
+//                    Object o = evaluated.get();
+//                    
+//                    if (o instanceof Collection) {
+//                        list = (Collection) o;
+//                    }
+//                    
+//                    if (o instanceof String) {
+//                        char[] chars = ((String) o).toCharArray();
+//                        for(char c : chars) {
+//                            list.add(c);
+//                        }
+//                    }
+//                    
+//                    int i = 0;
+//                    for (Object object : list) {
+//                        context.getModel().put("index", i++);
+//                        context.getModel().put(key, object);
+//                        System.out.println(object);
+//                    }
+//                })
+//                .binary("set", new String[]{"="}, (String value, Context context) -> {
+//                    String[] values = value.split("=");
+//                    
+//                    if (values.length < 2) {
+//                        throw new IllegalArgumentException("'set' should be followed by a attribution exression('a = b')");
+//                    }
+//                    
+//                    String key = values[0].trim();
+//                    String v = values[1].trim().replaceAll("(\\Q\"\\E)", "");
+//                    
+//                    context.getModel().put(key, v);
+//                })

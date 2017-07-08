@@ -16,18 +16,18 @@ public class DefaultFilter implements Filter {
         argumentNames.add("default");
     }
     
-    @Override
+//    @Override
     public String getName() {
         return "default";
     }
 
-    @Override
+//    @Override
     public Object evaluate(EvaluationContext context, Map<String, Object> args) {
-        
+        return null;
     }
     
 
-    @Override
+//    @Override
     public List<String> getArgumentNames() {
         return argumentNames;
     }

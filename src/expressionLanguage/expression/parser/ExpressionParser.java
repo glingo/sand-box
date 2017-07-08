@@ -143,7 +143,7 @@ public class ExpressionParser {
                     || NegativeTestExpression.class.equals(operator.getExpression())) {
                 // the right hand expression of TEST operators is handled in a
                 // unique way
-                expressionRight = parseTestInvocationExpression();
+//                expressionRight = parseTestInvocationExpression();
             } else {
                 /*
                  * parse the expression on the right hand side of the operator
@@ -349,27 +349,28 @@ public class ExpressionParser {
         if (stream.current().isA(Type.PUNCTUATION, "(")) {
             args = this.parseArguments();
         } else {
-            args = new ArgumentsNode(filterToken.getPosition(), null, null);
+//            args = new ArgumentsNode(filterToken.getPosition(), null, null);
         }
 
         return new FilterInvocationExpression(filterToken.getValue(), args);
     }
 
-    private Expression<?> parseTestInvocationExpression() {
-        TokenStream stream = parser.getStream();
-        Position position = stream.current().getPosition();
-
-        Token testToken = stream.expect(Type.NAME);
-
-        ArgumentsNode args = null;
-        if (stream.current().isA(Type.PUNCTUATION, "(")) {
-            args = this.parseArguments();
-        } else {
-            args = new ArgumentsNode(testToken.getPosition(), null, null);
-        }
-
-        return new TestInvocationExpression(position, testToken.getValue(), args);
-    }
+//    private Expression<?> parseTestInvocationExpression() {
+//        TokenStream stream = parser.getStream();
+//        Position position = stream.current().getPosition();
+//
+//        Token testToken = stream.expect(Type.NAME);
+//
+//        ArgumentsNode args = null;
+//        if (stream.current().isA(Type.PUNCTUATION, "(")) {
+//            args = this.parseArguments();
+//        } else {
+////            args = new ArgumentsNode(testToken.getPosition(), null, null);
+//        }
+//
+////        return new TestInvocationExpression(position, testToken.getValue(), args);
+//        return new TestInvocationExpression(position, testToken.getValue());
+//    }
 
     /**
      * A bean attribute expression can either be an expression getting an
@@ -394,10 +395,10 @@ public class ExpressionParser {
             ArgumentsNode args = null;
             if (stream.current().isA(Type.PUNCTUATION, "(")) {
                 args = this.parseArguments();
-                if (!args.getNamedArgs().isEmpty()) {
-                    String msg = String.format("Can not use named arguments when calling a bean method at line %s in file %s.", stream.current().getPosition(), stream.getFilename());
-                    throw new IllegalStateException(msg);
-                }
+//                if (!args.getNamedArgs().isEmpty()) {
+//                    String msg = String.format("Can not use named arguments when calling a bean method at line %s in file %s.", stream.current().getPosition(), stream.getFilename());
+//                    throw new IllegalStateException(msg);
+//                }
             }
 
             node = new GetAttributeExpression(node, new LiteralStringExpression(token.getValue()), args,
@@ -473,8 +474,10 @@ public class ExpressionParser {
 
         stream.expect(Type.PUNCTUATION, ")");
 
+//        return new ArgumentsNode(stream.current()
+//                            .getPosition(), positionalArgs, namedArgs);
         return new ArgumentsNode(stream.current()
-                            .getPosition(), positionalArgs, namedArgs);
+                            .getPosition(), positionalArgs);
     }
 
     /**

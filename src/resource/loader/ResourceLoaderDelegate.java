@@ -32,9 +32,6 @@ public class ResourceLoaderDelegate implements ResourceLoader {
     public InputStream load(String path) {
         Optional<ResourceLoader> loader = matches(path);
         if (loader.isPresent()) {
-            
-            System.out.print("From : ");
-            System.out.println(loader.get().getClass().getName());
             return loader.get().load(path);
         }
         

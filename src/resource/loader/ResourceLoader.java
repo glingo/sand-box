@@ -6,7 +6,9 @@ import java.nio.charset.Charset;
 import java.util.Optional;
 
 public interface ResourceLoader {
+    
     InputStream load (String path);
+    
     boolean exists (String path);
     
     default Optional<Charset> getCharset(String path) {

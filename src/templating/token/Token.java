@@ -1,6 +1,7 @@
-package templating;
+package templating.token;
 
 import java.util.Objects;
+import templating.Position;
 
 public class Token {
     
@@ -58,6 +59,10 @@ public class Token {
     
     public static Token EOF() {
         return new Token("EOF");
+    }
+    
+    public static Token text(String text, Position position) {
+        return new Token("text", text, position);
     }
 
     @Override

@@ -1,10 +1,13 @@
 package templating;
 
+import templating.token.TokenStream;
 import converter.ConverterResolver;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import templating.token.Token;
 
 public class Context {
     
@@ -12,9 +15,18 @@ public class Context {
     
     private TokenStream stream;
     
-    private ConverterResolver converter = new ConverterResolver();
+    private String name;
     
-    public <T> Optional<T> evaluate(String expression, Class<T> c) {
+    private List<Token> tokens;
+    
+    private ConverterResolver converter = new ConverterResolver();
+
+    public Context(List<Token> tokens, String name) {
+        this.tokens = tokens;
+        this.name = name;
+    }
+    
+    public <T> Optional<T> evaluate(String expression) {
         if (Objects.isNull(this.model)) {
             return Optional.empty();
         }
@@ -28,6 +40,10 @@ public class Context {
 
         return Optional.ofNullable((T) this.model.get(expression));
     }
+    
+    public <T> Optional<T> evaluate(String expression, Class<T> c) {
+        return evaluate(expression);
+    }
 
     public Map<String, Object> getModel() {
         return model;
@@ -40,13 +56,16 @@ public class Context {
     public ConverterResolver getConverter() {
         return converter;
     }
-
-    public TokenStream getStream() {
+    
+    public TokenStream getStream(boolean force) {
+        if (null == this.stream || force) {
+            this.stream = new TokenStream(tokens, name);
+        }
         return stream;
     }
-
-    public void setStream(TokenStream stream) {
-        this.stream = stream;
+    
+    public TokenStream getStream() {
+        return getStream(false);
     }
     
 }

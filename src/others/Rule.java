@@ -1,4 +1,4 @@
-package templating;
+package others;
 
 import java.util.function.Predicate;
 import java.util.regex.Matcher;

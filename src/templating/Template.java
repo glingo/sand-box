@@ -1,21 +1,19 @@
 package templating;
 
+import templating.token.TokenStream;
+import templating.token.Token;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Template {
+    
+    private Context context;
     
     private String name;
     
     private Template extend;
     
     private List<Template> imports;
-    
-    private List<Token> tokens;
-    
-    public TokenStream stream() {
-        return new TokenStream(tokens, name);
-    }
     
     public String getName() {
         return name;
@@ -41,19 +39,14 @@ public class Template {
         this.imports = imports;
     }
 
-    public List<Token> getTokens() {
-        return tokens;
+    public void setContext(Context context) {
+        this.context = context;
     }
 
-    public void setTokens(List<Token> tokens) {
-        this.tokens = tokens;
+    public Context getContext() {
+        return context;
     }
 
-    @Override
-    public String toString() {
-        return "Template{" + "name=" + name + ", extend=" + extend + ", imports=" + imports + ", tokens=" + tokens + '}';
-    }
-    
     public static TemplateBuilder builder() {
         return new TemplateBuilder();
     }
@@ -66,7 +59,7 @@ public class Template {
         
         private List<Template> imports = new ArrayList<>();
         
-        private List<Token> tokens = new ArrayList<>();
+        private Context context;
     
         public TemplateBuilder named(String name) {
             this.name = name;
@@ -83,13 +76,8 @@ public class Template {
             return this;
         }
         
-        public TemplateBuilder token(Token token) {
-            this.tokens.add(token);
-            return this;
-        }
-        
-        public TemplateBuilder tokens(List<Token> tokens) {
-            this.tokens = tokens;
+        public TemplateBuilder context(Context context) {
+            this.context = context;
             return this;
         }
         
@@ -99,8 +87,7 @@ public class Template {
             template.setName(this.name);
             template.setExtend(extend);
             template.setImports(imports);
-            template.setTokens(tokens);
-            
+            template.setContext(context);
             return template;
         }
     }

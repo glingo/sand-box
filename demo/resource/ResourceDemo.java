@@ -40,8 +40,8 @@ public class ResourceDemo {
 //            print(service.load("demo"));
 //            print(service.load("file:demo_file"));
 //            print(service.metadata("classpath:sources/sand_box/demo/resource/demo_classpath"));
-        ResourceUtils.print(service.load("classpath:demo_classpath"));
-        ResourceUtils.print(service.load("classpath:demo_1.txt"));
+        //ResourceUtils.print(service.load("classpath:demo_classpath"));
+        //ResourceUtils.print(service.load("classpath:demo_1.txt"));
         ResourceUtils.print(service.load("classpath:demo/resource/demo_classpath"));
 //            print(service.metadata("classpath:../../src/Test.java"));
 //            print(service.load("memory:test"));

@@ -1,52 +1,8 @@
 package templating;
 
-import java.util.Optional;
+import templating.token.Token;
 
 @FunctionalInterface
 public interface Renderer {
-    
-    void render(Template template, Environment environment) throws Exception;
-    
-    static Renderer debug() {
-        Context context = new Context();
-        
-        return (template, environment) -> {
-            TokenStream stream = template.stream();
-            context.setStream(stream);
-            Token token = stream.current();
-            while (!Token.isEOF(token)) {
-                String value = token.getValue();
-                switch (token.getType()) {
-                    case "comment_open":
-                        System.out.println("comment(" + value + ")");
-                        token = stream.next();
-                        break;
-                    case "print_open":
-                        System.out.print("print(" + value + "): ");
-                        Optional<Object> evaluated = context.evaluate(value, Object.class);
-                        if (evaluated.isPresent()) {
-                            System.out.print(evaluated.get());
-                        }
-                        System.out.println();
-                        token = stream.next();
-                        break;
-                    case "execute":
-                        System.out.println("execute(" + value + ")");
-                        environment.getSyntax().getExpressions().values().forEach((e) -> {
-                            e.evalute(value.trim(), context);
-                        });
-                        token = stream.next();
-                        break;
-                    case "text":
-                        System.out.println("text(" + value + ")");
-                        token = stream.next();
-                        break;
-                    default:
-                        System.out.println("skip(" + value + ")");
-                        token = stream.next();
-                        break;
-                }
-            }
-        };
-    }
+    void render(Token token, Context context) throws Exception;
 }

@@ -1,114 +1,110 @@
 package templating;
 
-import java.io.File;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
-import static java.util.regex.Pattern.compile;
 import resource.ResourceService;
 import resource.loader.ClasspathResourceLoader;
-import resource.loader.FileResourceLoader;
-import resource.loader.InMemoryResourceLoader;
-import resource.loader.StringResourceLoader;
 import resource.reference.ResourceReference;
+import templating.extention.core.CoreExtension;
+import templating.token.Tokenizer;
 
 public class TemplatingDemo {
-    private static final Pattern PATTERN_STRING = compile("((\").*?(?<!\\\\)(\"))|((').*?(?<!\\\\)('))", Pattern.DOTALL);
+//    private static final Pattern PATTERN_STRING = compile("((\").*?(?<!\\\\)(\"))|((').*?(?<!\\\\)('))", Pattern.DOTALL);
     
     public static void main(String[] args) throws Exception {
         ResourceService resourceService = ResourceService.builder()
-                .with(ResourceReference.FILE, FileResourceLoader.instance())
-                .with(ResourceReference.FILE, FileResourceLoader.instance(new File("/Users/florian/Documents/sources/sand-box/demo")))
-                .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(ClassLoader.getSystemClassLoader()))
+//                .with(ResourceReference.FILE, FileResourceLoader.instance())
+//                .with(ResourceReference.FILE, FileResourceLoader.instance(new File("/Users/florian/Documents/sources/sand-box/demo")))
+//                .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(ClassLoader.getSystemClassLoader()))
+                .with(ResourceReference.CLASSPATH, new ClasspathResourceLoader(TemplatingDemo.class.getClassLoader()))
                 .build();
 
-        Syntax syntax = Syntax.builder().build();
-        
+//        Syntax syntax = Syntax.builder().build();
+
         Environment env = Environment.builder()
                 .resourceService(resourceService)
-                .syntax(syntax)
+//                .syntax(syntax)
                 .build();
 
         Engine engine = Engine.builder()
                 .environment(env)
+                .execute("{%", "%}")
+                .comment("{#", "#}")
+                .print("{{", "}}")
                 .build();
 
-        Template demo = engine.load("templating/demo.view"); 
-        engine.render(demo, Renderer.debug());    
-        engine.render(demo, new StreamRenderer());  
+        Template demo = engine.load("templating/demo.view");  
+        engine.render(demo);
+//        engine.render(demo, Renderer.debug());    
+//        engine.render(demo, CoreExtension.debug());   
+    }
+}
+//        engine.render(demo, new StreamRenderer());  
                 
 //        engine.render(demo, (t, e) -> {
 //            t.getTokens().forEach(System.out::println);
 //            System.out.println(t);
 //        });             
         
-        Template template = Template.builder().named("first")
-                .build();
-        
-        Template home = Template.builder().named("home")
-                .extend(template)
-                .build();
-    }
+//        Template template = Template.builder().named("first")
+//                .build();
+//        
+//        Template home = Template.builder().named("home")
+//                .extend(template)
+//                .build();
     
-    public static class StreamRenderer implements Renderer {
-        
-        @Override
-        public void render(Template template, Environment environment) throws Exception {
-            Context context = new Context();
-            Writer writer = new OutputStreamWriter(System.out);
-            
-            TokenStream stream = template.stream();
-            Token token = stream.current();
-            
-            while (!Token.isEOF(token)) {
-                switch (token.getType()) {
-                    case "comment_open":
-                        token = stream.expect("comment_open");
-                        token = stream.expect("expression");
-                        token = stream.expect("comment_close");                        
-                        break;
-                    case "evaluate_open":
-                        token = stream.expect("evaluate_open");
-                        token = stream.expect("expression");
-                        token = stream.expect("evaluate_close");     
-//                        token = stream.next();
-//                        Optional<Object> evaluated = context.evaluate(token.getValue(), Object.class);
-//                        if (evaluated.isPresent()) {
-//                            writer.write(evaluated.get().toString());
-//                        }
-                        break;
-                    case "execute_open":
+//    public static class StreamRenderer implements Renderer {
+//        
+//        @Override
+//        public void render(Template template, Environment environment) throws Exception {
+//            Context context = new Context();
+//            Writer writer = new OutputStreamWriter(System.out);
+//            
+//            TokenStream stream = template.stream();
+//            Token token = stream.current();
+//            
+//            while (!Token.isEOF(token)) {
+//                switch (token.getType()) {
+//                    case "comment_open":
+//                        token = stream.expect("comment_open");
 //                        token = stream.expect("expression");
-                        // evaluate the expression
-//                        environment.getSyntax().getExpressions().values().forEach((e) -> {
-//                            e.evalute(token.getValue().trim(), context);
-//                        });
-                        break;
-                    case "text":
-                        writer.write(token.getValue());
-                        break;
-                    default:
-                        break;
-                }
-                token = stream.next();
-            }
-            
-            writer.flush();
-        }
-    }
-    
-    public static class ForExpression extends BinaryExpression {
-        
-        public ForExpression(String name, String[] operators, BiConsumer consumer) {
-            super(name, operators, consumer);
-        }
-        
-    }
-}
+//                        token = stream.expect("comment_close");                        
+//                        break;
+//                    case "evaluate_open":
+//                        token = stream.expect("evaluate_open");
+//                        token = stream.expect("expression");
+//                        token = stream.expect("evaluate_close");     
+////                        token = stream.next();
+////                        Optional<Object> evaluated = context.evaluate(token.getValue(), Object.class);
+////                        if (evaluated.isPresent()) {
+////                            writer.write(evaluated.get().toString());
+////                        }
+//                        break;
+//                    case "execute_open":
+////                        token = stream.expect("expression");
+//                        // evaluate the expression
+////                        environment.getSyntax().getExpressions().values().forEach((e) -> {
+////                            e.evalute(token.getValue().trim(), context);
+////                        });
+//                        break;
+//                    case "text":
+//                        writer.write(token.getValue());
+//                        break;
+//                    default:
+//                        break;
+//                }
+//                token = stream.next();
+//            }
+//            
+//            writer.flush();
+//        }
+//    }
+//    
+//    public static class ForExpression extends BinaryExpression {
+//        
+//        public ForExpression(String name, String[] operators, BiConsumer consumer) {
+//            super(name, operators, consumer);
+//        }
+//        
+//    }
 
 //        Rule executeStart = Rule.group("start", Pattern.quote("{%"));
 //        Rule executeEnd = Rule.group("end", Pattern.quote("%}"));

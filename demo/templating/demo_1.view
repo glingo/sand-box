@@ -1,0 +1,42 @@
+
+
+Leading text
+
+{% block 'test' %}
+    Ceci est dans le block test
+
+    {% if t %}
+        Ceci est dans la if condition
+    {% endif %}
+{% endblock %}
+
+{# comment #}
+{% set name = "World" %}
+
+Some text, to say hello ...
+
+Hello {{ name }} !
+
+
+{% if true -%}
+    This is true !
+{%- endif %} 
+
+
+{% if false %}
+    This is not true !
+{% endif %} 
+
+{% for letter in name %}
+    {{ letter }} 
+{% endfor %} 
+
+{% for i in tab %}
+    {% if i > 0 %}
+        Greater than 0
+    {% endif %}
+{% endfor %} 
+
+{{ unclosed 
+
+{% do it %}

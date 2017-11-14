@@ -1,26 +1,40 @@
-{# comment #}
-{% set name = "World" %}
+
+
+Leading text
+
+{% show(1) %}
+
+{% show([1, 2, 3, 4]) %}
+
+{% if (a == b) %}
+{% endif %}
+
+{% if not something %}
+{% endif %}
+
+{% if something %}
+{% endif %}
+
+{% block test %}
+    Ceci est dans le block test
+
+    {% if true %}
+        Ceci est dans la if condition
+    {% endif %}
+{% endblock %}
+
+{# comment [1, 2, 3, 4] #}
+
+{{ show [1, 2, 3, 4] }}
 
 Some text, to say hello ...
 
-Hello {{ name }} !
-
+Hello {{ name }} {{ person.name }}!
 
 {% if true %}
     This is true !
 {% endif %} 
 
+{% do it %}
 
-{% if false %}
-    This is not true !
-{% endif %} 
-
-{% for letter in name %}
-    {{ letter }} ... 
-{% endfor %} 
-
-{% for i in tab %}
-    {% if i > 0 %}
-        Greater than 0
-    {% endif %}
-{% endfor %} 
+qsdqsdsqdsdq

@@ -1,23 +1,20 @@
 package templating;
 
+import templating.token.Tokenizer;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import resource.ResourceService;
 
 public class Environment {
     
-    private Syntax syntax;
-    private Tokenizer tokenizer;
-    
     private ResourceService resourceService;
     
     private List<Source> sources;
-
+    
     public List<Source> getSources() {
         return sources;
     }
@@ -41,23 +38,6 @@ public class Environment {
         return result.get();
     }
 
-    public void setSyntax(Syntax syntax) {
-        this.syntax = syntax;
-    }
-
-    public Syntax getSyntax() {
-        return syntax;
-    }
-
-    public void setTokenizer(Tokenizer tokenizer) {
-        this.tokenizer = tokenizer;
-    }
-    
-    
-    public Tokenizer getTokenizer() {
-        return tokenizer;
-    }
-    
     public void setSources(List<Source> sources) {
         this.sources = sources;
     }
@@ -69,7 +49,7 @@ public class Environment {
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
-    
+
     public static EnvironmentBuilder builder() {
         return new EnvironmentBuilder();
     }
@@ -78,15 +58,8 @@ public class Environment {
     
         private ResourceService resourceService;
         
-        private Syntax syntax;
-
         public EnvironmentBuilder resourceService(ResourceService service) {
             this.resourceService = service;
-            return this;
-        }
-        
-        public EnvironmentBuilder syntax(Syntax syntax) {
-            this.syntax = syntax;
             return this;
         }
         
@@ -94,8 +67,6 @@ public class Environment {
             Environment env = new Environment();
             
             env.setResourceService(resourceService);
-            env.setSyntax(syntax);
-            env.setTokenizer(Tokenizer.builder().withSyntax(syntax).build());
             
             return env;
         }

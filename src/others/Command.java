@@ -1,4 +1,4 @@
-package templating;
+package others;
 
 import java.util.regex.Pattern;
 

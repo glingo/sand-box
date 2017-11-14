@@ -8,6 +8,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Source implements CharSequence {
+    
+    private Source saved;
 
     private final String name;
 
@@ -42,6 +44,10 @@ public class Source implements CharSequence {
         this.source = source;
         this.size = size;
     }
+    
+    public Source save() {
+        return new Source(name, Arrays.copyOfRange(source, offset, offset + size), size);
+    }
 
     /**
      * Moves the start index a certain amount. While traversing this amount we
@@ -50,7 +56,6 @@ public class Source implements CharSequence {
      * @param amount Amount of characters to advance by
      */
     public void advance(int amount) {
-
         int index = 0;
         while (index < amount) {
             int sizeOfNewline = advanceThroughNewline(index);
@@ -60,6 +65,7 @@ public class Source implements CharSequence {
             } else {
                 index++;
             }
+            this.columnNumber++;
         }
 
         this.size -= amount;
@@ -77,6 +83,7 @@ public class Source implements CharSequence {
             } else {
                 index++;
             }
+            this.columnNumber++;
         }
 
         this.size -= index;
@@ -99,6 +106,7 @@ public class Source implements CharSequence {
         if ('\r' == character && '\n' == charAt(index + 1)) {
 
             this.lineNumber++;
+            this.columnNumber = 0;
             numOfCharacters = 2;
 
             // various other newline characters
@@ -107,9 +115,10 @@ public class Source implements CharSequence {
                 || '\u2029' == character) {
 
             this.lineNumber++;
+            this.columnNumber = 0;
             numOfCharacters = 1;
         }
-        this.columnNumber++;
+        
         return numOfCharacters;
     }
 
@@ -139,6 +148,14 @@ public class Source implements CharSequence {
     @Override
     public String toString() {
         return new String(Arrays.copyOfRange(source, offset, offset + size));
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
     
     public Position getPosition() {

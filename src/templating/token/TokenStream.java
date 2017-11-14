@@ -1,4 +1,4 @@
-package templating;
+package templating.token;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +55,6 @@ public class TokenStream {
     public Token expect(String type, String value) {
         Token token = tokens.get(current);
 
-        
         boolean success = Objects.isNull(value) 
                 ? token.isA(type) : token.isA(type, value);
 
